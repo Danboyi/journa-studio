@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BookOpenText, History, LogOut, Sparkles, WandSparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { LifeOnboardingCard } from "@/components/onboarding/life-onboarding-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -346,6 +347,21 @@ export function JournaShell() {
         </div>
       </motion.section>
 
+      <LifeOnboardingCard
+        enabled={isAuthenticated}
+        onBuildNarrative={({ sourceText, voiceNotes }) => {
+          setComposeInput((prev) => ({
+            ...prev,
+            mode: "autobiography",
+            mood: "serious",
+            sourceText,
+            voiceNotes,
+            persist: true,
+          }));
+          setMode("copilot");
+        }}
+      />
+
       {!isAuthenticated ? (
         <Card className="mt-8 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
@@ -617,3 +633,4 @@ export function JournaShell() {
     </div>
   );
 }
+

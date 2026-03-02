@@ -12,6 +12,9 @@ Mobile-first web foundation for a premium journaling app with AI writing copilot
   - `POST /api/journal/daily-questions`
   - `GET/POST /api/journal/entries`
   - `POST /api/copilot/compose`
+  - `GET /api/copilot/history`
+  - `GET /api/onboarding/questions`
+  - `POST /api/onboarding/profile`
   - `POST /api/auth/sign-up`
   - `POST /api/auth/sign-in`
   - `POST /api/auth/sign-out`
@@ -50,6 +53,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000\nAUTH_COOKIE_NAME=journa_session
 Run SQL migration in your Supabase project:
 
 - `supabase/migrations/20260302180000_initial_schema.sql`
+- `supabase/migrations/20260302193000_add_onboarding_profile.sql`
 
 This creates:
 
@@ -61,4 +65,5 @@ This creates:
 ## Deployment
 
 See `docs/deployment/vercel.md` for required GitHub secrets and Vercel configuration.
+
 
