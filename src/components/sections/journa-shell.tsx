@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { dailyPromptPack, lifeCyclePromptPack } from "@/lib/prompt-packs";
-import type { ComposeRequest, ComposeResponse, NarrativeMood } from "@/types/journa";
+import type {
+  ComposeRequest,
+  ComposeResponse,
+  NarrativeMood,
+  WritingMode,
+} from "@/types/journa";
 
 const moods: NarrativeMood[] = [
   "funny",
@@ -19,6 +24,16 @@ const moods: NarrativeMood[] = [
   "horror",
   "suspense",
   "soul-piercing",
+];
+
+const writingModes: WritingMode[] = [
+  "story",
+  "essay",
+  "statement-of-purpose",
+  "biography",
+  "autobiography",
+  "life-documentation",
+  "daily-journal",
 ];
 
 export function JournaShell() {
@@ -33,6 +48,7 @@ export function JournaShell() {
     sourceText: "",
   });
   const [result, setResult] = useState<ComposeResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const dailyPrompts = useMemo(() => dailyPromptPack.slice(0, 3), []);
@@ -40,14 +56,23 @@ export function JournaShell() {
 
   async function generateDraft() {
     setIsLoading(true);
+    setError(null);
+
     try {
       const res = await fetch("/api/copilot/compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(composeInput),
       });
-      const data = (await res.json()) as ComposeResponse;
-      setResult(data);
+
+      const data = (await res.json()) as ComposeResponse | { error?: string };
+
+      if (!res.ok || ("error" in data && data.error)) {
+        setError("Could not compose draft. Check voice/source length and retry.");
+        return;
+      }
+
+      setResult(data as ComposeResponse);
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +154,13 @@ export function JournaShell() {
                 </li>
               ))}
             </ul>
-            <Button className="mt-5 w-full" onClick={() => setComposeInput((prev) => ({ ...prev, sourceText: journalText, mood }))}>
+            <Button
+              className="mt-5 w-full"
+              onClick={() => {
+                setComposeInput((prev) => ({ ...prev, sourceText: journalText, mood }));
+                setMode("copilot");
+              }}
+            >
               <Sparkles className="mr-2 h-4 w-4" /> Use entry in Copilot
             </Button>
           </Card>
@@ -141,6 +172,23 @@ export function JournaShell() {
             <p className="mt-1 text-sm text-[var(--ink-700)]">
               Transform rough notes into a polished draft while preserving voice.
             </p>
+
+            <label className="mt-4 block text-sm font-medium">Writing output</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {writingModes.map((writingMode) => (
+                <Button
+                  key={writingMode}
+                  variant={writingMode === composeInput.mode ? "default" : "secondary"}
+                  size="sm"
+                  onClick={() =>
+                    setComposeInput((prev) => ({ ...prev, mode: writingMode }))
+                  }
+                >
+                  {writingMode}
+                </Button>
+              ))}
+            </div>
+
             <label className="mt-4 block text-sm font-medium">Voice profile</label>
             <Textarea
               className="mt-2 min-h-[100px]"
@@ -172,6 +220,8 @@ export function JournaShell() {
                 </Button>
               ))}
             </div>
+
+            {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
 
             <Button className="mt-5 w-full" onClick={generateDraft} disabled={isLoading}>
               {isLoading ? "Composing..." : "Generate polished draft"}
