@@ -52,12 +52,23 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 OPENAI_API_KEY=
+SENTRY_DSN=
 OPENAI_MODEL=gpt-4.1-mini
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_COOKIE_NAME=journa_session
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+ALERT_WEBHOOK_URL=
+ALERT_WEBHOOK_BEARER_TOKEN=
+OBSERVABILITY_SERVICE_NAME=journa-studio
 ```
+
+## Observability
+
+- Every traced API response includes `x-request-id`
+- Structured request logs are emitted for start/end/fail events
+- `5xx` failures are captured to Sentry when `SENTRY_DSN` is set
+- Critical failures (`5xx`) can trigger webhook alerts when `ALERT_WEBHOOK_URL` is configured
 
 ## Supabase setup
 
