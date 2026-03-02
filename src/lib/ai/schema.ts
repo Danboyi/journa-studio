@@ -1,6 +1,6 @@
 ﻿import { z } from "zod";
 
-import type { NarrativeMood, WritingMode } from "@/types/journa";
+import type { NarrativeMood, StylePreset, WritingMode } from "@/types/journa";
 
 const moods: NarrativeMood[] = [
   "funny",
@@ -22,11 +22,20 @@ const modes: WritingMode[] = [
   "life-documentation",
 ];
 
+const stylePresets: StylePreset[] = [
+  "balanced",
+  "cinematic",
+  "academic",
+  "minimalist",
+  "soulful",
+];
+
 export const composeRequestSchema = z.object({
   mode: z.enum(modes),
   mood: z.enum(moods),
   voiceNotes: z.string().min(5).max(8000),
   sourceText: z.string().min(10).max(15000),
+  stylePreset: z.enum(stylePresets).optional().default("balanced"),
   persist: z.boolean().optional().default(true),
 });
 

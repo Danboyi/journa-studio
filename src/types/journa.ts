@@ -16,6 +16,13 @@ export type WritingMode =
   | "autobiography"
   | "life-documentation";
 
+export type StylePreset =
+  | "balanced"
+  | "cinematic"
+  | "academic"
+  | "minimalist"
+  | "soulful";
+
 export interface DailyEntryInput {
   headline: string;
   body: string;
@@ -28,6 +35,7 @@ export interface ComposeRequest {
   mood: NarrativeMood;
   voiceNotes: string;
   sourceText: string;
+  stylePreset?: StylePreset;
   persist?: boolean;
 }
 
@@ -52,6 +60,7 @@ export interface CompositionHistoryItem {
   id: string;
   mode: WritingMode;
   mood: NarrativeMood;
+  style_preset: StylePreset | null;
   source_text: string;
   voice_notes: string;
   title: string;

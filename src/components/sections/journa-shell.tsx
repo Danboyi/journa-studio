@@ -16,6 +16,7 @@ import type {
   ComposeResponse,
   JournalEntry,
   NarrativeMood,
+  StylePreset,
   WritingMode,
 } from "@/types/journa";
 
@@ -46,6 +47,26 @@ const writingModes: WritingMode[] = [
   "daily-journal",
 ];
 
+const stylePresets: StylePreset[] = [
+  "balanced",
+  "cinematic",
+  "academic",
+  "minimalist",
+  "soulful",
+];
+
+const copilotTemplates: Array<{
+  id: string;
+  label: string;
+  mode: WritingMode;
+  stylePreset: StylePreset;
+  mood: NarrativeMood;
+}> = [
+  { id: "sop", label: "SOP Pro", mode: "statement-of-purpose", stylePreset: "academic", mood: "serious" },
+  { id: "bio", label: "Bio Snapshot", mode: "biography", stylePreset: "balanced", mood: "serious" },
+  { id: "life", label: "Life Story", mode: "autobiography", stylePreset: "soulful", mood: "serious" },
+];
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -74,6 +95,7 @@ export function JournaShell() {
     mood: "serious",
     voiceNotes: "I write like I speak: direct, honest, reflective.",
     sourceText: "",
+    stylePreset: "balanced",
     persist: true,
   });
   const [result, setResult] = useState<ComposeResponse | null>(null);
@@ -293,6 +315,7 @@ export function JournaShell() {
     setComposeInput({
       mode: item.mode,
       mood: item.mood,
+      stylePreset: item.style_preset ?? "balanced",
       sourceText: item.source_text,
       voiceNotes: item.voice_notes,
       persist: true,
@@ -354,6 +377,7 @@ export function JournaShell() {
             ...prev,
             mode: "autobiography",
             mood: "serious",
+            stylePreset: "soulful",
             sourceText,
             voiceNotes,
             persist: true,
@@ -504,6 +528,27 @@ export function JournaShell() {
               Transform rough notes into a polished draft while preserving voice.
             </p>
 
+            <label className="mt-4 block text-sm font-medium">Quick templates</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {copilotTemplates.map((template) => (
+                <Button
+                  key={template.id}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    setComposeInput((prev) => ({
+                      ...prev,
+                      mode: template.mode,
+                      mood: template.mood,
+                      stylePreset: template.stylePreset,
+                    }))
+                  }
+                >
+                  {template.label}
+                </Button>
+              ))}
+            </div>
+
             <label className="mt-4 block text-sm font-medium">Writing output</label>
             <div className="mt-2 flex flex-wrap gap-2">
               {writingModes.map((writingMode) => (
@@ -516,6 +561,20 @@ export function JournaShell() {
                   }
                 >
                   {writingMode}
+                </Button>
+              ))}
+            </div>
+
+            <label className="mt-4 block text-sm font-medium">Style pack</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {stylePresets.map((preset) => (
+                <Button
+                  key={preset}
+                  variant={preset === composeInput.stylePreset ? "default" : "secondary"}
+                  size="sm"
+                  onClick={() => setComposeInput((prev) => ({ ...prev, stylePreset: preset }))}
+                >
+                  {preset}
                 </Button>
               ))}
             </div>
@@ -589,7 +648,7 @@ export function JournaShell() {
                       onClick={() => openHistoryItem(item)}
                     >
                       <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
-                        {item.mode} - {item.mood} - {formatDate(item.created_at)}
+                        {item.mode} - {item.mood} - {item.style_preset ?? "balanced"} - {formatDate(item.created_at)}
                       </p>
                       <p className="mt-1 font-semibold text-[var(--ink-900)]">{item.title}</p>
                       <p className="mt-1 line-clamp-2 text-sm text-[var(--ink-700)]">{item.excerpt}</p>

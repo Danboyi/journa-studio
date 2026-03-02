@@ -54,6 +54,7 @@ Run SQL migration in your Supabase project:
 
 - `supabase/migrations/20260302180000_initial_schema.sql`
 - `supabase/migrations/20260302193000_add_onboarding_profile.sql`
+- `supabase/migrations/20260302201500_add_style_preset_to_compositions.sql`
 
 This creates:
 
@@ -65,5 +66,6 @@ This creates:
 ## Deployment
 
 See `docs/deployment/vercel.md` for required GitHub secrets and Vercel configuration.
+
 
 

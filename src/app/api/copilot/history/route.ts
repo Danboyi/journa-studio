@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("compositions")
-    .select("id, mode, mood, source_text, voice_notes, title, excerpt, draft, editorial_notes, created_at, updated_at")
+    .select("id, mode, mood, style_preset, source_text, voice_notes, title, excerpt, draft, editorial_notes, created_at, updated_at")
     .order("created_at", { ascending: false })
     .limit(20);
 

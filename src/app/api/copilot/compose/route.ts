@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             mode: composeInput.mode,
             mood: composeInput.mood,
+            style_preset: composeInput.stylePreset ?? "balanced",
             source_text: composeInput.sourceText,
             voice_notes: composeInput.voiceNotes,
             title: output.title,
