@@ -1,0 +1,17 @@
+name: compose-jobs-runner
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  process-compose-jobs:
+    if: ${{ secrets.APP_BASE_URL != '' && secrets.JOB_RUNNER_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger compose worker endpoint
+        run: |
+          curl -sS -X POST "${{ secrets.APP_BASE_URL }}/api/internal/compose-jobs/process" \
+            -H "x-job-runner-token: ${{ secrets.JOB_RUNNER_TOKEN }}" \
+            -H "Content-Type: application/json"

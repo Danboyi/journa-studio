@@ -14,6 +14,8 @@ Mobile-first web foundation for a premium journaling app with AI writing copilot
   - `GET/POST /api/collections`
   - `POST /api/collections/:collectionId/items`
   - `POST /api/copilot/compose`
+  - `POST /api/copilot/compose/jobs`
+  - `GET /api/copilot/compose/jobs/:jobId`
   - `GET /api/copilot/history`
   - `POST /api/copilot/export`
   - `GET/POST /api/copilot/shares`
@@ -59,6 +61,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_COOKIE_NAME=journa_session
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
+JOB_RUNNER_TOKEN=
+COMPOSE_JOB_BATCH_SIZE=5
 ALERT_WEBHOOK_URL=
 ALERT_WEBHOOK_BEARER_TOKEN=
 OBSERVABILITY_SERVICE_NAME=journa-studio
@@ -82,6 +86,7 @@ Run SQL migration in your Supabase project:
 - `supabase/migrations/20260302223000_add_share_security_analytics.sql`
 - `supabase/migrations/20260302233000_add_published_collections.sql`
 - `supabase/migrations/20260302235500_add_usage_events_guardrails.sql`
+- `supabase/migrations/20260303003000_add_compose_jobs_queue.sql`
 
 This creates:
 
@@ -89,6 +94,13 @@ This creates:
 - `journal_entries`
 - `compositions`
 - ownership-based RLS policies for all three
+
+## Async compose worker
+
+- Enqueue async compose work with `POST /api/copilot/compose/jobs`
+- Poll status with `GET /api/copilot/compose/jobs/:jobId`
+- Process queue with `POST /api/internal/compose-jobs/process`
+  - Auth header: `x-job-runner-token: <JOB_RUNNER_TOKEN>`
 
 ## Deployment
 

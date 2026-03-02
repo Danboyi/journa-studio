@@ -29,6 +29,7 @@ export const config = {
     "/api/journal/:path*",
     "/api/collections/:path*",
     "/api/copilot/history",
+    "/api/copilot/compose/jobs/:path*",
     "/api/copilot/shares/:path*",
     "/api/copilot/export",
     "/api/onboarding/profile",
