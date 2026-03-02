@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 import type { NarrativeMood, WritingMode } from "@/types/journa";
 
@@ -27,6 +27,7 @@ export const composeRequestSchema = z.object({
   mood: z.enum(moods),
   voiceNotes: z.string().min(5).max(8000),
   sourceText: z.string().min(10).max(15000),
+  persist: z.boolean().optional().default(true),
 });
 
 export const composeResponseSchema = z.object({
@@ -67,5 +68,6 @@ export const composeResponseJsonSchema = {
   },
 } as const;
 
-export type ComposeRequestInput = z.infer<typeof composeRequestSchema>;
+export type ComposeRequestInput = Omit<z.infer<typeof composeRequestSchema>, "persist">;
+export type ComposeRequestPayload = z.infer<typeof composeRequestSchema>;
 export type ComposeResponseOutput = z.infer<typeof composeResponseSchema>;

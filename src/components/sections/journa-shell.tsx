@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpenText, LogOut, Sparkles, WandSparkles } from "lucide-react";
+import { BookOpenText, History, LogOut, Sparkles, WandSparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { dailyPromptPack, lifeCyclePromptPack } from "@/lib/prompt-packs";
 import type {
+  CompositionHistoryItem,
   ComposeRequest,
   ComposeResponse,
   JournalEntry,
@@ -65,12 +66,14 @@ export function JournaShell() {
   const [headline, setHeadline] = useState("Today in one sentence");
   const [mood, setMood] = useState<NarrativeMood>("serious");
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [compositions, setCompositions] = useState<CompositionHistoryItem[]>([]);
 
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
     mood: "serious",
     voiceNotes: "I write like I speak: direct, honest, reflective.",
     sourceText: "",
+    persist: true,
   });
   const [result, setResult] = useState<ComposeResponse | null>(null);
 
@@ -78,6 +81,7 @@ export function JournaShell() {
   const [isComposeLoading, setIsComposeLoading] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isEntriesLoading, setIsEntriesLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSavingEntry, setIsSavingEntry] = useState(false);
 
   const dailyPrompts = useMemo(() => dailyPromptPack.slice(0, 3), []);
@@ -104,6 +108,27 @@ export function JournaShell() {
     }
   }, []);
 
+  const loadHistory = useCallback(async () => {
+    setIsHistoryLoading(true);
+
+    try {
+      const res = await fetch("/api/copilot/history");
+      const payload = (await res.json()) as {
+        compositions?: CompositionHistoryItem[];
+        error?: string;
+      };
+
+      if (!res.ok || !payload.compositions) {
+        setError(payload.error ?? "Could not load composition history.");
+        return;
+      }
+
+      setCompositions(payload.compositions);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const bootstrap = async () => {
       setIsAuthLoading(true);
@@ -118,24 +143,14 @@ export function JournaShell() {
         }
 
         setAuthUser(payload.user);
-        await loadEntries();
+        await Promise.all([loadEntries(), loadHistory()]);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
     void bootstrap();
-  }, [loadEntries]);
-
-  async function authedFetch(path: string, init?: RequestInit) {
-    const headers = new Headers(init?.headers);
-
-    if (!headers.has("Content-Type") && init?.body) {
-      headers.set("Content-Type", "application/json");
-    }
-
-    return fetch(path, { ...init, headers });
-  }
+  }, [loadEntries, loadHistory]);
 
   async function handleAuthSubmit() {
     setIsAuthLoading(true);
@@ -175,7 +190,7 @@ export function JournaShell() {
 
       if (payload.user) {
         setAuthUser(payload.user);
-        await loadEntries();
+        await Promise.all([loadEntries(), loadHistory()]);
         setAuthPassword("");
         setAuthFullName("");
         return;
@@ -201,6 +216,8 @@ export function JournaShell() {
 
     setAuthUser(null);
     setEntries([]);
+    setCompositions([]);
+    setResult(null);
   }
 
   async function saveEntry() {
@@ -213,8 +230,11 @@ export function JournaShell() {
     setError(null);
 
     try {
-      const res = await authedFetch("/api/journal/entries", {
+      const res = await fetch("/api/journal/entries", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           headline,
           body: journalText,
@@ -259,9 +279,32 @@ export function JournaShell() {
       }
 
       setResult(data as ComposeResponse);
+
+      if (authUser && composeInput.persist !== false) {
+        await loadHistory();
+      }
     } finally {
       setIsComposeLoading(false);
     }
+  }
+
+  function openHistoryItem(item: CompositionHistoryItem) {
+    setComposeInput({
+      mode: item.mode,
+      mood: item.mood,
+      sourceText: item.source_text,
+      voiceNotes: item.voice_notes,
+      persist: true,
+    });
+
+    setResult({
+      title: item.title,
+      excerpt: item.excerpt,
+      draft: item.draft,
+      editorialNotes: item.editorial_notes,
+    });
+
+    setMode("copilot");
   }
 
   const isAuthenticated = Boolean(authUser);
@@ -509,13 +552,44 @@ export function JournaShell() {
                 </li>
               ))}
             </ul>
-            <div className="mt-5 rounded-xl bg-[var(--ink-950)] p-4 text-[var(--sand-50)]">
-              <p className="text-xs tracking-[0.08em] uppercase">Output preview</p>
-              <p className="mt-2 text-sm leading-relaxed">
-                {result?.excerpt ??
-                  "Your refined draft appears here with edit notes and structure."}
-              </p>
-            </div>
+
+            {isAuthenticated ? (
+              <>
+                <div className="mt-5 flex items-center justify-between">
+                  <p className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-700)]">
+                    <History className="mr-2 h-3.5 w-3.5" /> Composition history
+                  </p>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {isHistoryLoading ? <p className="text-sm text-[var(--ink-700)]">Loading history...</p> : null}
+                  {!isHistoryLoading && compositions.length === 0 ? (
+                    <p className="text-sm text-[var(--ink-700)]">No saved compositions yet.</p>
+                  ) : null}
+                  {compositions.slice(0, 6).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="w-full rounded-xl border border-[var(--ink-300)] bg-white/80 p-3 text-left hover:border-[var(--brand-700)]"
+                      onClick={() => openHistoryItem(item)}
+                    >
+                      <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
+                        {item.mode} - {item.mood} - {formatDate(item.created_at)}
+                      </p>
+                      <p className="mt-1 font-semibold text-[var(--ink-900)]">{item.title}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-[var(--ink-700)]">{item.excerpt}</p>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="mt-5 rounded-xl bg-[var(--ink-950)] p-4 text-[var(--sand-50)]">
+                <p className="text-xs tracking-[0.08em] uppercase">Output preview</p>
+                <p className="mt-2 text-sm leading-relaxed">
+                  {result?.excerpt ??
+                    "Your refined draft appears here with edit notes and structure."}
+                </p>
+              </div>
+            )}
           </Card>
         </section>
       )}

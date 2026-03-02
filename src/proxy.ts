@@ -25,5 +25,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/journal/:path*", "/api/auth/session", "/api/auth/sign-out"],
+  matcher: [
+    "/api/journal/:path*",
+    "/api/copilot/history",
+    "/api/auth/session",
+    "/api/auth/sign-out",
+  ],
 };
