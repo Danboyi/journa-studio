@@ -77,6 +77,16 @@ export const composeResponseJsonSchema = {
   },
 } as const;
 
+export const createShareSchema = z.object({
+  compositionId: z.uuid(),
+  expiresInDays: z.number().int().min(1).max(365).optional().default(30),
+});
+
+export const exportCompositionSchema = z.object({
+  compositionId: z.uuid(),
+  format: z.enum(["markdown", "text"]).default("markdown"),
+});
+
 export type ComposeRequestInput = Omit<z.infer<typeof composeRequestSchema>, "persist">;
 export type ComposeRequestPayload = z.infer<typeof composeRequestSchema>;
 export type ComposeResponseOutput = z.infer<typeof composeResponseSchema>;

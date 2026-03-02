@@ -106,6 +106,9 @@ export function JournaShell() {
   const [isEntriesLoading, setIsEntriesLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSavingEntry, setIsSavingEntry] = useState(false);
+  const [activeShareId, setActiveShareId] = useState<string | null>(null);
+  const [activeExportId, setActiveExportId] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   const dailyPrompts = useMemo(() => dailyPromptPack.slice(0, 3), []);
   const lifePrompts = useMemo(() => lifeCyclePromptPack.slice(0, 3), []);
@@ -308,6 +311,77 @@ export function JournaShell() {
       }
     } finally {
       setIsComposeLoading(false);
+    }
+  }
+
+  function downloadContent(filename: string, content: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function createShareLink(compositionId: string) {
+    setActiveShareId(compositionId);
+    setShareStatus(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/copilot/shares", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ compositionId, expiresInDays: 30 }),
+      });
+
+      const payload = (await res.json()) as {
+        error?: string;
+        share?: { token: string };
+      };
+
+      if (!res.ok || !payload.share?.token) {
+        setError(payload.error ?? "Could not create share link.");
+        return;
+      }
+
+      const link = `${window.location.origin}/share/${payload.share.token}`;
+      await navigator.clipboard.writeText(link);
+      setShareStatus("Share link copied to clipboard.");
+    } finally {
+      setActiveShareId(null);
+    }
+  }
+
+  async function exportComposition(compositionId: string, format: "markdown" | "text") {
+    setActiveExportId(compositionId);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/copilot/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ compositionId, format }),
+      });
+
+      const payload = (await res.json()) as {
+        error?: string;
+        filename?: string;
+        content?: string;
+        mimeType?: string;
+      };
+
+      if (!res.ok || !payload.filename || !payload.content || !payload.mimeType) {
+        setError(payload.error ?? "Could not export composition.");
+        return;
+      }
+
+      downloadContent(payload.filename, payload.content, payload.mimeType);
+    } finally {
+      setActiveExportId(null);
     }
   }
 
@@ -641,20 +715,45 @@ export function JournaShell() {
                     <p className="text-sm text-[var(--ink-700)]">No saved compositions yet.</p>
                   ) : null}
                   {compositions.slice(0, 6).map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="w-full rounded-xl border border-[var(--ink-300)] bg-white/80 p-3 text-left hover:border-[var(--brand-700)]"
-                      onClick={() => openHistoryItem(item)}
-                    >
+                    <div key={item.id} className="rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
                       <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
                         {item.mode} - {item.mood} - {item.style_preset ?? "balanced"} - {formatDate(item.created_at)}
                       </p>
                       <p className="mt-1 font-semibold text-[var(--ink-900)]">{item.title}</p>
                       <p className="mt-1 line-clamp-2 text-sm text-[var(--ink-700)]">{item.excerpt}</p>
-                    </button>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => openHistoryItem(item)}>
+                          Open
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={activeShareId === item.id}
+                          onClick={() => createShareLink(item.id)}
+                        >
+                          {activeShareId === item.id ? "Sharing..." : "Copy Link"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={activeExportId === item.id}
+                          onClick={() => exportComposition(item.id, "markdown")}
+                        >
+                          {activeExportId === item.id ? "Exporting..." : "Export .md"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={activeExportId === item.id}
+                          onClick={() => exportComposition(item.id, "text")}
+                        >
+                          {activeExportId === item.id ? "Exporting..." : "Export .txt"}
+                        </Button>
+                      </div>
+                    </div>
                   ))}
                 </div>
+                {shareStatus ? <p className="mt-3 text-xs text-emerald-700">{shareStatus}</p> : null}
               </>
             ) : (
               <div className="mt-5 rounded-xl bg-[var(--ink-950)] p-4 text-[var(--sand-50)]">

@@ -28,6 +28,8 @@ export const config = {
   matcher: [
     "/api/journal/:path*",
     "/api/copilot/history",
+    "/api/copilot/shares/:path*",
+    "/api/copilot/export",
     "/api/onboarding/profile",
     "/api/auth/session",
     "/api/auth/sign-out",
