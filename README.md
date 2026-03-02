@@ -33,6 +33,7 @@ Mobile-first web foundation for a premium journaling app with AI writing copilot
 - Env validation with `zod`
 - Supabase schema + RLS migration
 - CI workflow (`lint` + `build`) and Vercel deploy workflow
+- Playwright e2e workflow for critical authenticated flows
 
 ## Run locally
 
@@ -92,6 +93,21 @@ This creates:
 ## Deployment
 
 See `docs/deployment/vercel.md` for required GitHub secrets and Vercel configuration.
+
+## E2E testing
+
+Run critical flow tests (auth, compose, share, collection publish):
+
+```bash
+npm run test:e2e
+```
+
+Required env vars for this suite:
+
+- `E2E_USER_EMAIL`
+- `E2E_USER_PASSWORD`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 
 
