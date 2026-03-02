@@ -65,6 +65,7 @@ Run SQL migration in your Supabase project:
 - `supabase/migrations/20260302214500_add_composition_shares.sql`
 - `supabase/migrations/20260302223000_add_share_security_analytics.sql`
 - `supabase/migrations/20260302233000_add_published_collections.sql`
+- `supabase/migrations/20260302235500_add_usage_events_guardrails.sql`
 
 This creates:
 
@@ -76,6 +77,7 @@ This creates:
 ## Deployment
 
 See `docs/deployment/vercel.md` for required GitHub secrets and Vercel configuration.
+
 
 
 

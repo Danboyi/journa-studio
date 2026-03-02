@@ -3,6 +3,7 @@
 import { createShareSchema } from "@/lib/ai/schema";
 import { hashSecret } from "@/lib/auth/password";
 import { getAccessToken } from "@/lib/auth/token";
+import { enforceRateLimit, getRequestIp, rateLimitResponse } from "@/lib/rate-limit";
 import { createSupabaseUserClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -50,6 +51,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing session token." }, { status: 401 });
   }
 
+  const ip = getRequestIp(request);
+  const ipLimit = enforceRateLimit(`shares:create:ip:${ip}`, { limit: 20, windowMs: 60_000 });
+
+  if (!ipLimit.allowed) {
+    return rateLimitResponse("Too many share requests. Try again shortly.", ipLimit.retryAfterSeconds);
+  }
+
   const supabase = createSupabaseUserClient(accessToken);
 
   if (!supabase) {
@@ -63,6 +71,15 @@ export async function POST(request: NextRequest) {
 
   if (userError || !user) {
     return NextResponse.json({ error: "Invalid session." }, { status: 401 });
+  }
+
+  const userLimit = enforceRateLimit(`shares:create:user:${user.id}`, {
+    limit: 40,
+    windowMs: 60_000,
+  });
+
+  if (!userLimit.allowed) {
+    return rateLimitResponse("Share rate limit reached for your account.", userLimit.retryAfterSeconds);
   }
 
   const json = await request.json();
