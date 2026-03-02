@@ -2,12 +2,13 @@ import OpenAI from "openai";
 
 import { env, hasOpenAI } from "@/config/env";
 import { composeDraft } from "@/lib/demo-composer";
+import { buildComposePrompt } from "@/lib/ai/prompt";
 import {
+  composeResponseJsonSchema,
   composeResponseSchema,
   type ComposeRequestInput,
   type ComposeResponseOutput,
 } from "@/lib/ai/schema";
-import { buildComposePrompt } from "@/lib/ai/prompt";
 
 interface ComposeProvider {
   compose(input: ComposeRequestInput): Promise<ComposeResponseOutput>;
@@ -27,6 +28,14 @@ class OpenAIComposeProvider implements ComposeProvider {
       model: env.OPENAI_MODEL,
       input: buildComposePrompt(input),
       temperature: 0.8,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "compose_response",
+          strict: true,
+          schema: composeResponseJsonSchema,
+        },
+      },
     });
 
     const text = response.output_text;

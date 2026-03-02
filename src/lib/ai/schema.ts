@@ -36,5 +36,36 @@ export const composeResponseSchema = z.object({
   editorialNotes: z.array(z.string().min(3)).min(1),
 });
 
+export const composeResponseJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["title", "excerpt", "draft", "editorialNotes"],
+  properties: {
+    title: {
+      type: "string",
+      minLength: 2,
+      maxLength: 120,
+    },
+    excerpt: {
+      type: "string",
+      minLength: 10,
+      maxLength: 280,
+    },
+    draft: {
+      type: "string",
+      minLength: 50,
+    },
+    editorialNotes: {
+      type: "array",
+      minItems: 1,
+      maxItems: 6,
+      items: {
+        type: "string",
+        minLength: 3,
+      },
+    },
+  },
+} as const;
+
 export type ComposeRequestInput = z.infer<typeof composeRequestSchema>;
 export type ComposeResponseOutput = z.infer<typeof composeResponseSchema>;
