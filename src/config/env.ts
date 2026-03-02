@@ -9,6 +9,8 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   AUTH_COOKIE_NAME: z.string().min(1).default("journa_session"),
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse({
@@ -20,6 +22,8 @@ export const env = envSchema.parse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   AUTH_COOKIE_NAME: process.env.AUTH_COOKIE_NAME,
+  UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+  UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
 export const hasOpenAI = Boolean(env.OPENAI_API_KEY);
@@ -27,3 +31,6 @@ export const hasSupabaseUrl = Boolean(env.NEXT_PUBLIC_SUPABASE_URL);
 export const hasSupabaseAnon = Boolean(env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 export const hasSupabaseServiceRole = Boolean(env.SUPABASE_SERVICE_ROLE_KEY);
 export const hasSupabase = hasSupabaseUrl && (hasSupabaseAnon || hasSupabaseServiceRole);
+export const hasUpstashRedis = Boolean(
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN,
+);
