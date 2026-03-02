@@ -11,12 +11,15 @@ Mobile-first web foundation for a premium journaling app with AI writing copilot
   - `GET /api/health`
   - `POST /api/journal/daily-questions`
   - `GET/POST /api/journal/entries`
+  - `GET/POST /api/collections`
+  - `POST /api/collections/:collectionId/items`
   - `POST /api/copilot/compose`
   - `GET /api/copilot/history`
   - `POST /api/copilot/export`
   - `GET/POST /api/copilot/shares`
   - `DELETE /api/copilot/shares/:shareId`
   - `GET /api/public/share/:token`
+  - `GET /api/public/collections/:slug`
   - `GET /api/onboarding/questions`
   - `POST /api/onboarding/profile`
   - `POST /api/auth/sign-up`
@@ -61,6 +64,7 @@ Run SQL migration in your Supabase project:
 - `supabase/migrations/20260302201500_add_style_preset_to_compositions.sql`
 - `supabase/migrations/20260302214500_add_composition_shares.sql`
 - `supabase/migrations/20260302223000_add_share_security_analytics.sql`
+- `supabase/migrations/20260302233000_add_published_collections.sql`
 
 This creates:
 
@@ -72,6 +76,7 @@ This creates:
 ## Deployment
 
 See `docs/deployment/vercel.md` for required GitHub secrets and Vercel configuration.
+
 
 
 

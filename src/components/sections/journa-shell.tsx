@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { dailyPromptPack, lifeCyclePromptPack } from "@/lib/prompt-packs";
 import type {
+  Collection,
   CompositionHistoryItem,
   CompositionShareItem,
   ComposeRequest,
@@ -91,6 +92,7 @@ export function JournaShell() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [compositions, setCompositions] = useState<CompositionHistoryItem[]>([]);
   const [shares, setShares] = useState<CompositionShareItem[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
 
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
@@ -108,6 +110,7 @@ export function JournaShell() {
   const [isEntriesLoading, setIsEntriesLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isSharesLoading, setIsSharesLoading] = useState(false);
+  const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [activeShareId, setActiveShareId] = useState<string | null>(null);
   const [activeRevokeShareId, setActiveRevokeShareId] = useState<string | null>(null);
@@ -115,6 +118,11 @@ export function JournaShell() {
   const [shareStatus, setShareStatus] = useState<string | null>(null);
   const [shareExpiryDays, setShareExpiryDays] = useState(30);
   const [sharePassword, setSharePassword] = useState("");
+  const [collectionTitle, setCollectionTitle] = useState("");
+  const [collectionDescription, setCollectionDescription] = useState("");
+  const [collectionIsPublic, setCollectionIsPublic] = useState(true);
+  const [selectedCollectionId, setSelectedCollectionId] = useState("");
+  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
 
   const dailyPrompts = useMemo(() => dailyPromptPack.slice(0, 3), []);
   const lifePrompts = useMemo(() => lifeCyclePromptPack.slice(0, 3), []);
@@ -182,6 +190,30 @@ export function JournaShell() {
     }
   }, []);
 
+  const loadCollections = useCallback(async () => {
+    setIsCollectionsLoading(true);
+
+    try {
+      const res = await fetch("/api/collections");
+      const payload = (await res.json()) as {
+        collections?: Collection[];
+        error?: string;
+      };
+
+      if (!res.ok || !payload.collections) {
+        setError(payload.error ?? "Could not load collections.");
+        return;
+      }
+
+      setCollections(payload.collections);
+      if (!selectedCollectionId && payload.collections.length > 0) {
+        setSelectedCollectionId(payload.collections[0].id);
+      }
+    } finally {
+      setIsCollectionsLoading(false);
+    }
+  }, [selectedCollectionId]);
+
   useEffect(() => {
     const bootstrap = async () => {
       setIsAuthLoading(true);
@@ -196,14 +228,14 @@ export function JournaShell() {
         }
 
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory(), loadShares()]);
+        await Promise.all([loadEntries(), loadHistory(), loadShares(), loadCollections()]);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
     void bootstrap();
-  }, [loadEntries, loadHistory, loadShares]);
+  }, [loadEntries, loadHistory, loadShares, loadCollections]);
 
   async function handleAuthSubmit() {
     setIsAuthLoading(true);
@@ -243,7 +275,7 @@ export function JournaShell() {
 
       if (payload.user) {
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory(), loadShares()]);
+        await Promise.all([loadEntries(), loadHistory(), loadShares(), loadCollections()]);
         setAuthPassword("");
         setAuthFullName("");
         return;
@@ -271,6 +303,7 @@ export function JournaShell() {
     setEntries([]);
     setCompositions([]);
     setShares([]);
+    setCollections([]);
     setResult(null);
   }
 
@@ -386,6 +419,73 @@ export function JournaShell() {
       await loadShares();
     } finally {
       setActiveShareId(null);
+    }
+  }
+
+  async function createCollection() {
+    if (!collectionTitle.trim()) {
+      setError("Collection title is required.");
+      return;
+    }
+
+    setActiveCollectionId("create");
+    setError(null);
+
+    try {
+      const res = await fetch("/api/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: collectionTitle.trim(),
+          description: collectionDescription.trim(),
+          isPublic: collectionIsPublic,
+        }),
+      });
+
+      const payload = (await res.json()) as { error?: string; collection?: Collection };
+
+      if (!res.ok || !payload.collection) {
+        setError(payload.error ?? "Could not create collection.");
+        return;
+      }
+
+      setCollectionTitle("");
+      setCollectionDescription("");
+      setSelectedCollectionId(payload.collection.id);
+      await loadCollections();
+      setShareStatus("Collection created.");
+    } finally {
+      setActiveCollectionId(null);
+    }
+  }
+
+  async function addToCollection(compositionId: string) {
+    if (!selectedCollectionId) {
+      setError("Select a collection first.");
+      return;
+    }
+
+    setActiveCollectionId(compositionId);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/collections/${selectedCollectionId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ compositionId }),
+      });
+
+      const payload = (await res.json()) as { error?: string };
+
+      if (!res.ok) {
+        setError(payload.error ?? "Could not add composition to collection.");
+        return;
+      }
+
+      await loadCollections();
+      setShareStatus("Added to collection.");
+    } finally {
+      setActiveCollectionId(null);
     }
   }
 
@@ -767,6 +867,70 @@ export function JournaShell() {
                     <History className="mr-2 h-3.5 w-3.5" /> Composition history
                   </p>
                 </div>
+                <div className="mt-3 rounded-xl border border-[var(--ink-300)] bg-white/70 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">
+                    Collections
+                  </p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <input
+                      value={collectionTitle}
+                      onChange={(event) => setCollectionTitle(event.target.value)}
+                      className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                      placeholder="New collection title"
+                    />
+                    <input
+                      value={collectionDescription}
+                      onChange={(event) => setCollectionDescription(event.target.value)}
+                      className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                      placeholder="Optional description"
+                    />
+                    <select
+                      value={selectedCollectionId}
+                      onChange={(event) => setSelectedCollectionId(event.target.value)}
+                      className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                    >
+                      <option value="">Select collection</option>
+                      {collections.map((collection) => (
+                        <option key={collection.id} value={collection.id}>
+                          {collection.title}
+                        </option>
+                      ))}
+                    </select>
+                    <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={collectionIsPublic}
+                        onChange={(event) => setCollectionIsPublic(event.target.checked)}
+                      />
+                      Public collection
+                    </label>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={createCollection}
+                      disabled={activeCollectionId === "create"}
+                    >
+                      {activeCollectionId === "create" ? "Creating..." : "Create Collection"}
+                    </Button>
+                    {selectedCollectionId ? (
+                      <a
+                        className="inline-flex h-9 items-center rounded-full bg-[var(--sand-100)] px-4 text-xs font-semibold text-[var(--ink-800)]"
+                        href={`/collections/${collections.find((item) => item.id === selectedCollectionId)?.slug ?? ""}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open Collection
+                      </a>
+                    ) : null}
+                    {isCollectionsLoading ? (
+                      <span className="inline-flex h-9 items-center text-xs text-[var(--ink-600)]">
+                        Syncing collections...
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <input
                     type="number"
@@ -810,6 +974,14 @@ export function JournaShell() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button size="sm" variant="secondary" onClick={() => openHistoryItem(item)}>
                           Open
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={!selectedCollectionId || activeCollectionId === item.id}
+                          onClick={() => addToCollection(item.id)}
+                        >
+                          {activeCollectionId === item.id ? "Adding..." : "Add to Collection"}
                         </Button>
                         <Button
                           size="sm"

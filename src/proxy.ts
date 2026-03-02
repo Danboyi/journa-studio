@@ -27,6 +27,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/api/journal/:path*",
+    "/api/collections/:path*",
     "/api/copilot/history",
     "/api/copilot/shares/:path*",
     "/api/copilot/export",

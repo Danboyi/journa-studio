@@ -82,3 +82,20 @@ export interface CompositionShareItem {
   last_viewed_at: string | null;
   created_at: string;
 }
+
+export interface CollectionItem {
+  id: string;
+  composition_id: string;
+  position: number;
+}
+
+export interface Collection {
+  id: string;
+  title: string;
+  description: string | null;
+  slug: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  items: CollectionItem[] | null;
+}
