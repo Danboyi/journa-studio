@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
+import { clearSessionCookie, setSessionCookie } from "@/lib/auth/cookie";
 import { signInSchema } from "@/lib/auth/schema";
 import { createSupabaseAnonClient } from "@/lib/supabase/server";
 
@@ -25,12 +26,20 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 });
+  if (error || !data.user || !data.session?.access_token) {
+    const fail = NextResponse.json(
+      { error: error?.message ?? "Invalid credentials." },
+      { status: 401 },
+    );
+    clearSessionCookie(fail);
+    return fail;
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     user: data.user,
-    session: data.session,
   });
+
+  setSessionCookie(response, data.session.access_token);
+
+  return response;
 }

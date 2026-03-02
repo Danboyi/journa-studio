@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-import { getBearerToken } from "@/lib/auth/token";
+import { getAccessToken } from "@/lib/auth/token";
 import { createSupabaseUserClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
-  const accessToken = getBearerToken(request);
+  const accessToken = getAccessToken(request);
 
   if (!accessToken) {
-    return NextResponse.json({ error: "Missing bearer token." }, { status: 401 });
+    return NextResponse.json({ error: "Missing session token." }, { status: 401 });
   }
 
   const supabase = createSupabaseUserClient(accessToken);

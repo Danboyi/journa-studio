@@ -17,8 +17,6 @@ import type {
   WritingMode,
 } from "@/types/journa";
 
-const ACCESS_TOKEN_KEY = "journa_access_token";
-
 type AuthMode = "sign-in" | "sign-up";
 
 type SessionUser = {
@@ -62,7 +60,6 @@ export function JournaShell() {
   const [authPassword, setAuthPassword] = useState("");
   const [authFullName, setAuthFullName] = useState("");
   const [authUser, setAuthUser] = useState<SessionUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const [journalText, setJournalText] = useState("");
   const [headline, setHeadline] = useState("Today in one sentence");
@@ -86,16 +83,11 @@ export function JournaShell() {
   const dailyPrompts = useMemo(() => dailyPromptPack.slice(0, 3), []);
   const lifePrompts = useMemo(() => lifeCyclePromptPack.slice(0, 3), []);
 
-  const loadEntries = useCallback(async (token: string) => {
+  const loadEntries = useCallback(async () => {
     setIsEntriesLoading(true);
 
     try {
-      const res = await fetch("/api/journal/entries", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await fetch("/api/journal/entries");
       const payload = (await res.json()) as {
         entries?: JournalEntry[];
         error?: string;
@@ -113,34 +105,20 @@ export function JournaShell() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-
-    if (!token) {
-      return;
-    }
-
     const bootstrap = async () => {
       setIsAuthLoading(true);
 
       try {
-        const res = await fetch("/api/auth/session", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
+        const res = await fetch("/api/auth/session");
         const payload = (await res.json()) as { user?: SessionUser; error?: string };
 
         if (!res.ok || !payload.user) {
-          localStorage.removeItem(ACCESS_TOKEN_KEY);
-          setAccessToken(null);
           setAuthUser(null);
           return;
         }
 
-        setAccessToken(token);
         setAuthUser(payload.user);
-        await loadEntries(token);
+        await loadEntries();
       } finally {
         setIsAuthLoading(false);
       }
@@ -150,12 +128,7 @@ export function JournaShell() {
   }, [loadEntries]);
 
   async function authedFetch(path: string, init?: RequestInit) {
-    if (!accessToken) {
-      throw new Error("Missing access token.");
-    }
-
     const headers = new Headers(init?.headers);
-    headers.set("Authorization", `Bearer ${accessToken}`);
 
     if (!headers.has("Content-Type") && init?.body) {
       headers.set("Content-Type", "application/json");
@@ -192,7 +165,7 @@ export function JournaShell() {
       const payload = (await res.json()) as {
         error?: string;
         user?: SessionUser;
-        session?: { access_token?: string } | null;
+        needsEmailConfirmation?: boolean;
       };
 
       if (!res.ok || payload.error) {
@@ -200,19 +173,18 @@ export function JournaShell() {
         return;
       }
 
-      if (payload.session?.access_token && payload.user) {
-        const token = payload.session.access_token;
-        localStorage.setItem(ACCESS_TOKEN_KEY, token);
-        setAccessToken(token);
+      if (payload.user) {
         setAuthUser(payload.user);
-        await loadEntries(token);
+        await loadEntries();
         setAuthPassword("");
         setAuthFullName("");
         return;
       }
 
-      setError("Signup succeeded. Confirm your email, then sign in.");
-      setAuthMode("sign-in");
+      if (payload.needsEmailConfirmation) {
+        setError("Signup succeeded. Confirm your email, then sign in.");
+        setAuthMode("sign-in");
+      }
     } finally {
       setIsAuthLoading(false);
     }
@@ -222,13 +194,11 @@ export function JournaShell() {
     setError(null);
 
     try {
-      await authedFetch("/api/auth/sign-out", { method: "POST" });
+      await fetch("/api/auth/sign-out", { method: "POST" });
     } catch {
-      // Ignore sign out API errors and clear local session.
+      // Ignore sign out API errors and clear local auth state.
     }
 
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    setAccessToken(null);
     setAuthUser(null);
     setEntries([]);
   }
@@ -294,7 +264,7 @@ export function JournaShell() {
     }
   }
 
-  const isAuthenticated = Boolean(authUser && accessToken);
+  const isAuthenticated = Boolean(authUser);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
@@ -384,7 +354,7 @@ export function JournaShell() {
             {isAuthLoading ? "Please wait..." : authMode === "sign-in" ? "Sign in" : "Create account"}
           </Button>
           <p className="mt-2 text-xs text-[var(--ink-700)]">
-            Auth is live via Supabase. For sign-up, confirm email in your inbox if your project enforces email verification.
+            Auth uses secure HTTP-only cookies. For sign-up, confirm email if your Supabase project enforces verification.
           </p>
         </Card>
       ) : null}

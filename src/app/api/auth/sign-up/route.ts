@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
+import { setSessionCookie } from "@/lib/auth/cookie";
 import { signUpSchema } from "@/lib/auth/schema";
 import { createSupabaseAnonClient } from "@/lib/supabase/server";
 
@@ -39,9 +40,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     user: data.user,
-    session: data.session,
     needsEmailConfirmation: !data.session,
   });
+
+  if (data.session?.access_token) {
+    setSessionCookie(response, data.session.access_token);
+  }
+
+  return response;
 }

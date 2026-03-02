@@ -1,17 +1,17 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 
-export function getBearerToken(request: NextRequest): string | null {
-  const value = request.headers.get("authorization");
+import { readSessionToken } from "@/lib/auth/cookie";
 
-  if (!value) {
-    return null;
+export function getAccessToken(request: NextRequest): string | null {
+  const header = request.headers.get("authorization");
+
+  if (header) {
+    const [scheme, token] = header.split(" ");
+
+    if (scheme?.toLowerCase() === "bearer" && token) {
+      return token;
+    }
   }
 
-  const [scheme, token] = value.split(" ");
-
-  if (scheme?.toLowerCase() !== "bearer" || !token) {
-    return null;
-  }
-
-  return token;
+  return readSessionToken(request);
 }

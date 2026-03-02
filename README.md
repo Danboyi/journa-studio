@@ -1,4 +1,4 @@
-# My Journa (journa-studio)
+﻿# My Journa (journa-studio)
 
 Mobile-first web foundation for a premium journaling app with AI writing copilot.
 
@@ -16,7 +16,7 @@ Mobile-first web foundation for a premium journaling app with AI writing copilot
   - `POST /api/auth/sign-in`
   - `POST /api/auth/sign-out`
   - `GET /api/auth/session`
-- Provider-based AI orchestration:
+- Cookie-based auth session (HTTP-only, secure in production)\n- Provider-based AI orchestration:
   - OpenAI structured output provider when `OPENAI_API_KEY` exists
   - Deterministic demo provider fallback
 - Env validation with `zod`
@@ -42,7 +42,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4.1-mini
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000\nAUTH_COOKIE_NAME=journa_session
 ```
 
 ## Supabase setup
@@ -61,3 +61,4 @@ This creates:
 ## Deployment
 
 See `docs/deployment/vercel.md` for required GitHub secrets and Vercel configuration.
+
