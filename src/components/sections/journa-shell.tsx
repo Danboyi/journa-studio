@@ -29,6 +29,8 @@ type SessionUser = {
   email?: string;
 };
 
+type ComposeJobStatus = "queued" | "processing" | "completed" | "failed";
+
 const moods: NarrativeMood[] = [
   "funny",
   "serious",
@@ -103,6 +105,7 @@ export function JournaShell() {
     persist: true,
   });
   const [result, setResult] = useState<ComposeResponse | null>(null);
+  const [composeStatus, setComposeStatus] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [isComposeLoading, setIsComposeLoading] = useState(false);
@@ -350,24 +353,115 @@ export function JournaShell() {
   async function generateDraft() {
     setIsComposeLoading(true);
     setError(null);
+    setComposeStatus(null);
 
     try {
-      const res = await fetch("/api/copilot/compose", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(composeInput),
-      });
+      if (!authUser) {
+        const res = await fetch("/api/copilot/compose", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(composeInput),
+        });
 
-      const data = (await res.json()) as ComposeResponse | { error?: string };
+        const data = (await res.json()) as ComposeResponse | { error?: string };
 
-      if (!res.ok || ("error" in data && data.error)) {
-        setError("Could not compose draft. Check voice/source length and retry.");
+        if (!res.ok || ("error" in data && data.error)) {
+          setError("Could not compose draft. Check voice/source length and retry.");
+          return;
+        }
+
+        setResult(data as ComposeResponse);
         return;
       }
 
-      setResult(data as ComposeResponse);
+      const enqueueRes = await fetch("/api/copilot/compose/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: composeInput.mode,
+          mood: composeInput.mood,
+          sourceText: composeInput.sourceText,
+          voiceNotes: composeInput.voiceNotes,
+          stylePreset: composeInput.stylePreset ?? "balanced",
+          maxAttempts: 3,
+        }),
+      });
 
-      if (authUser && composeInput.persist !== false) {
+      const enqueuePayload = (await enqueueRes.json()) as {
+        error?: string;
+        job?: { id: string };
+      };
+
+      if (!enqueueRes.ok || !enqueuePayload.job?.id) {
+        setError(enqueuePayload.error ?? "Could not enqueue compose job.");
+        return;
+      }
+
+      const jobId = enqueuePayload.job.id;
+      setComposeStatus("Draft queued. Processing...");
+
+      let attempts = 0;
+      let completed = false;
+
+      while (attempts < 60) {
+        attempts += 1;
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        const statusRes = await fetch(`/api/copilot/compose/jobs/${jobId}`);
+        const statusPayload = (await statusRes.json()) as {
+          error?: string;
+          job?: {
+            status: ComposeJobStatus;
+            last_error?: string | null;
+          };
+          composition?: {
+            title: string;
+            excerpt: string;
+            draft: string;
+            editorial_notes: string[];
+          } | null;
+        };
+
+        if (!statusRes.ok || !statusPayload.job) {
+          setError(statusPayload.error ?? "Could not track compose job.");
+          return;
+        }
+
+        if (statusPayload.job.status === "queued") {
+          setComposeStatus("Draft queued. Waiting for worker...");
+          continue;
+        }
+
+        if (statusPayload.job.status === "processing") {
+          setComposeStatus("AI is writing your draft...");
+          continue;
+        }
+
+        if (statusPayload.job.status === "failed") {
+          setError(statusPayload.job.last_error ?? "Compose job failed.");
+          setComposeStatus(null);
+          return;
+        }
+
+        if (statusPayload.job.status === "completed" && statusPayload.composition) {
+          setResult({
+            title: statusPayload.composition.title,
+            excerpt: statusPayload.composition.excerpt,
+            draft: statusPayload.composition.draft,
+            editorialNotes: statusPayload.composition.editorial_notes,
+          });
+          setComposeStatus("Draft ready.");
+          completed = true;
+          break;
+        }
+      }
+
+      if (!completed) {
+        setError("Compose job is taking longer than expected. Check history in a moment.");
+      }
+
+      if (composeInput.persist !== false) {
         await loadHistory();
       }
     } finally {
@@ -846,6 +940,7 @@ export function JournaShell() {
             <Button className="mt-5 w-full" onClick={generateDraft} disabled={isComposeLoading}>
               {isComposeLoading ? "Composing..." : "Generate polished draft"}
             </Button>
+            {composeStatus ? <p className="mt-2 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
           </Card>
 
           <Card className="p-5 sm:p-6">

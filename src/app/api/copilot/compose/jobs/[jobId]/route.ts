@@ -57,8 +57,13 @@ export async function GET(
 
     let composition: {
       id: string;
+      source_text: string;
+      voice_notes: string;
+      style_preset: string | null;
       title: string;
       excerpt: string;
+      draft: string;
+      editorial_notes: string[];
       mode: string;
       mood: string;
       created_at: string;
@@ -67,7 +72,9 @@ export async function GET(
     if (job.composition_id) {
       const { data } = await supabase
         .from("compositions")
-        .select("id, title, excerpt, mode, mood, created_at")
+        .select(
+          "id, source_text, voice_notes, style_preset, title, excerpt, draft, editorial_notes, mode, mood, created_at",
+        )
         .eq("id", job.composition_id)
         .eq("user_id", user.id)
         .single();
