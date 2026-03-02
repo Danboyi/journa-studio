@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 
 import { createShareSchema } from "@/lib/ai/schema";
+import { hashSecret } from "@/lib/auth/password";
 import { getAccessToken } from "@/lib/auth/token";
 import { createSupabaseUserClient } from "@/lib/supabase/server";
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("composition_shares")
-    .select("id, token, expires_at, is_revoked, created_at, composition:compositions(id, title)")
+    .select("id, token, composition_id, expires_at, is_revoked, password_hash, view_count, last_viewed_at, created_at")
     .order("created_at", { ascending: false })
     .limit(30);
 
@@ -27,7 +28,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ shares: data });
+  return NextResponse.json({
+    shares: (data ?? []).map((item) => ({
+      id: item.id,
+      token: item.token,
+      composition_id: item.composition_id,
+      expires_at: item.expires_at,
+      is_revoked: item.is_revoked,
+      password_protected: Boolean(item.password_hash),
+      view_count: item.view_count ?? 0,
+      last_viewed_at: item.last_viewed_at,
+      created_at: item.created_at,
+    })),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -62,7 +75,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { compositionId, expiresInDays } = parsed.data;
+  const { compositionId, expiresInDays, password } = parsed.data;
 
   const { data: composition, error: compositionError } = await supabase
     .from("compositions")
@@ -83,13 +96,29 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       composition_id: compositionId,
       expires_at: expiresAt,
+      password_hash: password ? hashSecret(password) : null,
     })
-    .select("id, token, expires_at, is_revoked, created_at")
+    .select("id, token, composition_id, expires_at, is_revoked, password_hash, view_count, last_viewed_at, created_at")
     .single();
 
   if (error || !data) {
     return NextResponse.json({ error: error?.message ?? "Could not create share." }, { status: 400 });
   }
 
-  return NextResponse.json({ share: data }, { status: 201 });
+  return NextResponse.json(
+    {
+      share: {
+        id: data.id,
+        token: data.token,
+        composition_id: data.composition_id,
+        expires_at: data.expires_at,
+        is_revoked: data.is_revoked,
+        password_protected: Boolean(data.password_hash),
+        view_count: data.view_count ?? 0,
+        last_viewed_at: data.last_viewed_at,
+        created_at: data.created_at,
+      },
+    },
+    { status: 201 },
+  );
 }

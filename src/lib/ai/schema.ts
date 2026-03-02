@@ -80,6 +80,7 @@ export const composeResponseJsonSchema = {
 export const createShareSchema = z.object({
   compositionId: z.uuid(),
   expiresInDays: z.number().int().min(1).max(365).optional().default(30),
+  password: z.string().min(4).max(100).optional(),
 });
 
 export const exportCompositionSchema = z.object({

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { dailyPromptPack, lifeCyclePromptPack } from "@/lib/prompt-packs";
 import type {
   CompositionHistoryItem,
+  CompositionShareItem,
   ComposeRequest,
   ComposeResponse,
   JournalEntry,
@@ -89,6 +90,7 @@ export function JournaShell() {
   const [mood, setMood] = useState<NarrativeMood>("serious");
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [compositions, setCompositions] = useState<CompositionHistoryItem[]>([]);
+  const [shares, setShares] = useState<CompositionShareItem[]>([]);
 
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
@@ -105,10 +107,14 @@ export function JournaShell() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isEntriesLoading, setIsEntriesLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isSharesLoading, setIsSharesLoading] = useState(false);
   const [isSavingEntry, setIsSavingEntry] = useState(false);
   const [activeShareId, setActiveShareId] = useState<string | null>(null);
+  const [activeRevokeShareId, setActiveRevokeShareId] = useState<string | null>(null);
   const [activeExportId, setActiveExportId] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [shareExpiryDays, setShareExpiryDays] = useState(30);
+  const [sharePassword, setSharePassword] = useState("");
 
   const dailyPrompts = useMemo(() => dailyPromptPack.slice(0, 3), []);
   const lifePrompts = useMemo(() => lifeCyclePromptPack.slice(0, 3), []);
@@ -155,6 +161,27 @@ export function JournaShell() {
     }
   }, []);
 
+  const loadShares = useCallback(async () => {
+    setIsSharesLoading(true);
+
+    try {
+      const res = await fetch("/api/copilot/shares");
+      const payload = (await res.json()) as {
+        shares?: CompositionShareItem[];
+        error?: string;
+      };
+
+      if (!res.ok || !payload.shares) {
+        setError(payload.error ?? "Could not load share analytics.");
+        return;
+      }
+
+      setShares(payload.shares);
+    } finally {
+      setIsSharesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const bootstrap = async () => {
       setIsAuthLoading(true);
@@ -169,14 +196,14 @@ export function JournaShell() {
         }
 
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory()]);
+        await Promise.all([loadEntries(), loadHistory(), loadShares()]);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
     void bootstrap();
-  }, [loadEntries, loadHistory]);
+  }, [loadEntries, loadHistory, loadShares]);
 
   async function handleAuthSubmit() {
     setIsAuthLoading(true);
@@ -216,7 +243,7 @@ export function JournaShell() {
 
       if (payload.user) {
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory()]);
+        await Promise.all([loadEntries(), loadHistory(), loadShares()]);
         setAuthPassword("");
         setAuthFullName("");
         return;
@@ -243,6 +270,7 @@ export function JournaShell() {
     setAuthUser(null);
     setEntries([]);
     setCompositions([]);
+    setShares([]);
     setResult(null);
   }
 
@@ -335,7 +363,11 @@ export function JournaShell() {
       const res = await fetch("/api/copilot/shares", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ compositionId, expiresInDays: 30 }),
+        body: JSON.stringify({
+          compositionId,
+          expiresInDays: shareExpiryDays,
+          password: sharePassword.trim() || undefined,
+        }),
       });
 
       const payload = (await res.json()) as {
@@ -350,10 +382,36 @@ export function JournaShell() {
 
       const link = `${window.location.origin}/share/${payload.share.token}`;
       await navigator.clipboard.writeText(link);
-      setShareStatus("Share link copied to clipboard.");
+      setShareStatus(`Share link copied. Expires in ${shareExpiryDays} day(s).`);
+      await loadShares();
     } finally {
       setActiveShareId(null);
     }
+  }
+
+  async function revokeShare(shareId: string) {
+    setActiveRevokeShareId(shareId);
+    setError(null);
+    setShareStatus(null);
+
+    try {
+      const res = await fetch(`/api/copilot/shares/${shareId}`, { method: "DELETE" });
+      const payload = (await res.json()) as { error?: string };
+
+      if (!res.ok) {
+        setError(payload.error ?? "Could not revoke share link.");
+        return;
+      }
+
+      setShareStatus("Share link revoked.");
+      await loadShares();
+    } finally {
+      setActiveRevokeShareId(null);
+    }
+  }
+
+  function findLatestShareForComposition(compositionId: string) {
+    return shares.find((share) => share.composition_id === compositionId && !share.is_revoked) ?? null;
   }
 
   async function exportComposition(compositionId: string, format: "markdown" | "text") {
@@ -709,8 +767,27 @@ export function JournaShell() {
                     <History className="mr-2 h-3.5 w-3.5" /> Composition history
                   </p>
                 </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={shareExpiryDays}
+                    onChange={(event) => setShareExpiryDays(Number(event.target.value || 30))}
+                    className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                    placeholder="Share expiry in days"
+                  />
+                  <input
+                    type="password"
+                    value={sharePassword}
+                    onChange={(event) => setSharePassword(event.target.value)}
+                    className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                    placeholder="Optional share password"
+                  />
+                </div>
                 <div className="mt-3 space-y-2">
                   {isHistoryLoading ? <p className="text-sm text-[var(--ink-700)]">Loading history...</p> : null}
+                  {isSharesLoading ? <p className="text-sm text-[var(--ink-700)]">Loading share analytics...</p> : null}
                   {!isHistoryLoading && compositions.length === 0 ? (
                     <p className="text-sm text-[var(--ink-700)]">No saved compositions yet.</p>
                   ) : null}
@@ -721,6 +798,15 @@ export function JournaShell() {
                       </p>
                       <p className="mt-1 font-semibold text-[var(--ink-900)]">{item.title}</p>
                       <p className="mt-1 line-clamp-2 text-sm text-[var(--ink-700)]">{item.excerpt}</p>
+                      {findLatestShareForComposition(item.id) ? (
+                        <p className="mt-1 text-xs text-[var(--ink-600)]">
+                          Views: {findLatestShareForComposition(item.id)?.view_count ?? 0}
+                          {" · "}
+                          Last view: {findLatestShareForComposition(item.id)?.last_viewed_at ? formatDate(findLatestShareForComposition(item.id)!.last_viewed_at!) : "Never"}
+                          {" · "}
+                          {findLatestShareForComposition(item.id)?.password_protected ? "Password protected" : "Open link"}
+                        </p>
+                      ) : null}
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button size="sm" variant="secondary" onClick={() => openHistoryItem(item)}>
                           Open
@@ -749,6 +835,18 @@ export function JournaShell() {
                         >
                           {activeExportId === item.id ? "Exporting..." : "Export .txt"}
                         </Button>
+                        {findLatestShareForComposition(item.id) ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={activeRevokeShareId === findLatestShareForComposition(item.id)?.id}
+                            onClick={() => revokeShare(findLatestShareForComposition(item.id)!.id)}
+                          >
+                            {activeRevokeShareId === findLatestShareForComposition(item.id)?.id
+                              ? "Revoking..."
+                              : "Revoke Link"}
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   ))}

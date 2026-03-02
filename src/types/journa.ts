@@ -70,3 +70,15 @@ export interface CompositionHistoryItem {
   created_at: string;
   updated_at: string;
 }
+
+export interface CompositionShareItem {
+  id: string;
+  token: string;
+  composition_id: string;
+  expires_at: string | null;
+  is_revoked: boolean;
+  password_protected: boolean;
+  view_count: number;
+  last_viewed_at: string | null;
+  created_at: string;
+}
