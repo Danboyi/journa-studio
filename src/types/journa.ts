@@ -36,3 +36,13 @@ export interface ComposeResponse {
   draft: string;
   editorialNotes: string[];
 }
+
+export interface JournalEntry {
+  id: string;
+  headline: string;
+  body: string;
+  mood: NarrativeMood;
+  refined_body: string | null;
+  created_at: string;
+  updated_at: string;
+}

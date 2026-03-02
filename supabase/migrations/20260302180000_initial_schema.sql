@@ -13,7 +13,7 @@ create table if not exists public.profiles (
 
 create table if not exists public.journal_entries (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   headline text not null,
   body text not null,
   mood text not null check (
@@ -27,7 +27,7 @@ create table if not exists public.journal_entries (
 
 create table if not exists public.compositions (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   mode text not null check (
     mode in (
       'daily-journal',
@@ -159,3 +159,4 @@ drop policy if exists "Compositions owned delete" on public.compositions;
 create policy "Compositions owned delete"
   on public.compositions for delete
   using (auth.uid() = user_id);
+

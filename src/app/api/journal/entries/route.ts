@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: "Invalid session." }, { status: 401 });
+  }
+
   const json = await request.json();
   const parsed = createEntrySchema.safeParse(json);
 
@@ -62,6 +71,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("journal_entries")
     .insert({
+      user_id: user.id,
       headline: parsed.data.headline,
       body: parsed.data.body,
       mood: parsed.data.mood,
