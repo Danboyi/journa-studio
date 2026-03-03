@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { dailyPromptPack, lifeCyclePromptPack } from "@/lib/prompt-packs";
 import type {
   Collection,
+  ComposeJobItem,
   CompositionHistoryItem,
   CompositionShareItem,
   ComposeRequest,
@@ -93,6 +94,7 @@ export function JournaShell() {
   const [mood, setMood] = useState<NarrativeMood>("serious");
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [compositions, setCompositions] = useState<CompositionHistoryItem[]>([]);
+  const [composeJobs, setComposeJobs] = useState<ComposeJobItem[]>([]);
   const [shares, setShares] = useState<CompositionShareItem[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
 
@@ -112,6 +114,7 @@ export function JournaShell() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isEntriesLoading, setIsEntriesLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isComposeJobsLoading, setIsComposeJobsLoading] = useState(false);
   const [isSharesLoading, setIsSharesLoading] = useState(false);
   const [isCollectionsLoading, setIsCollectionsLoading] = useState(false);
   const [isSavingEntry, setIsSavingEntry] = useState(false);
@@ -169,6 +172,27 @@ export function JournaShell() {
       setCompositions(payload.compositions);
     } finally {
       setIsHistoryLoading(false);
+    }
+  }, []);
+
+  const loadComposeJobs = useCallback(async () => {
+    setIsComposeJobsLoading(true);
+
+    try {
+      const res = await fetch("/api/copilot/compose/jobs");
+      const payload = (await res.json()) as {
+        jobs?: ComposeJobItem[];
+        error?: string;
+      };
+
+      if (!res.ok || !payload.jobs) {
+        setError(payload.error ?? "Could not load compose jobs.");
+        return;
+      }
+
+      setComposeJobs(payload.jobs);
+    } finally {
+      setIsComposeJobsLoading(false);
     }
   }, []);
 
@@ -231,14 +255,14 @@ export function JournaShell() {
         }
 
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory(), loadShares(), loadCollections()]);
+        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections()]);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
     void bootstrap();
-  }, [loadEntries, loadHistory, loadShares, loadCollections]);
+  }, [loadEntries, loadHistory, loadComposeJobs, loadShares, loadCollections]);
 
   async function handleAuthSubmit() {
     setIsAuthLoading(true);
@@ -278,7 +302,7 @@ export function JournaShell() {
 
       if (payload.user) {
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory(), loadShares(), loadCollections()]);
+        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections()]);
         setAuthPassword("");
         setAuthFullName("");
         return;
@@ -305,6 +329,7 @@ export function JournaShell() {
     setAuthUser(null);
     setEntries([]);
     setCompositions([]);
+    setComposeJobs([]);
     setShares([]);
     setCollections([]);
     setResult(null);
@@ -462,7 +487,7 @@ export function JournaShell() {
       }
 
       if (composeInput.persist !== false) {
-        await loadHistory();
+        await Promise.all([loadHistory(), loadComposeJobs()]);
       }
     } finally {
       setIsComposeLoading(false);
@@ -655,6 +680,40 @@ export function JournaShell() {
     });
 
     setMode("copilot");
+  }
+
+  async function openComposeJobItem(job: ComposeJobItem) {
+    if (job.status !== "completed") {
+      return;
+    }
+
+    setError(null);
+
+    const res = await fetch(`/api/copilot/compose/jobs/${job.id}`);
+    const payload = (await res.json()) as {
+      error?: string;
+      composition?: {
+        title: string;
+        excerpt: string;
+        draft: string;
+        editorial_notes: string[];
+      } | null;
+    };
+
+    if (!res.ok || !payload.composition) {
+      setError(payload.error ?? "Could not open compose job result.");
+      return;
+    }
+
+    setResult({
+      title: payload.composition.title,
+      excerpt: payload.composition.excerpt,
+      draft: payload.composition.draft,
+      editorialNotes: payload.composition.editorial_notes,
+    });
+
+    setComposeStatus("Loaded from async job history.");
+    await loadHistory();
   }
 
   const isAuthenticated = Boolean(authUser);
@@ -957,6 +1016,54 @@ export function JournaShell() {
 
             {isAuthenticated ? (
               <>
+                <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">
+                      Async compose jobs
+                    </p>
+                    <Button size="sm" variant="secondary" onClick={loadComposeJobs} disabled={isComposeJobsLoading}>
+                      {isComposeJobsLoading ? "Refreshing..." : "Refresh"}
+                    </Button>
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {isComposeJobsLoading ? (
+                      <p className="text-sm text-[var(--ink-700)]">Loading compose jobs...</p>
+                    ) : null}
+                    {!isComposeJobsLoading && composeJobs.length === 0 ? (
+                      <p className="text-sm text-[var(--ink-700)]">
+                        No async jobs yet. Generate a draft to queue one.
+                      </p>
+                    ) : null}
+                    {composeJobs.slice(0, 6).map((job) => (
+                      <div key={job.id} className="rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
+                        <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
+                          {job.status} - attempt {job.attempt_count}/{job.max_attempts} - {formatDate(job.created_at)}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-[var(--ink-900)]">
+                          {job.composition?.title ?? "Pending composition output"}
+                        </p>
+                        {job.last_error ? (
+                          <p className="mt-1 text-xs text-red-700">{job.last_error}</p>
+                        ) : (
+                          <p className="mt-1 text-xs text-[var(--ink-600)]">
+                            {job.composition?.excerpt ?? "Awaiting worker processing."}
+                          </p>
+                        )}
+                        <div className="mt-2 flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={job.status !== "completed"}
+                            onClick={() => openComposeJobItem(job)}
+                          >
+                            Open Result
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="mt-5 flex items-center justify-between">
                   <p className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-700)]">
                     <History className="mr-2 h-3.5 w-3.5" /> Composition history

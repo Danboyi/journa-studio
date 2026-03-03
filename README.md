@@ -14,7 +14,7 @@ Mobile-first web foundation for a premium journaling app with AI writing copilot
   - `GET/POST /api/collections`
   - `POST /api/collections/:collectionId/items`
   - `POST /api/copilot/compose`
-  - `POST /api/copilot/compose/jobs`
+  - `GET/POST /api/copilot/compose/jobs`
   - `GET /api/copilot/compose/jobs/:jobId`
   - `GET /api/copilot/history`
   - `POST /api/copilot/export`

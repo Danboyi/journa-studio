@@ -99,3 +99,25 @@ export interface Collection {
   updated_at: string;
   items: CollectionItem[] | null;
 }
+
+export interface ComposeJobItem {
+  id: string;
+  status: "queued" | "processing" | "completed" | "failed";
+  attempt_count: number;
+  max_attempts: number;
+  next_run_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  last_error: string | null;
+  composition_id: string | null;
+  created_at: string;
+  updated_at: string;
+  composition: {
+    id: string;
+    title: string;
+    excerpt: string;
+    mode: WritingMode;
+    mood: NarrativeMood;
+    created_at: string;
+  } | null;
+}
