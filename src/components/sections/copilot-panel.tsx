@@ -122,6 +122,7 @@ type CopilotPanelProps = {
   onRevokeShare: (shareId: string) => void;
   onOpenHistoryItem: (item: CompositionHistoryItem) => void;
   onRetrieve: () => void;
+  onUseRecapPrompt: (window: "weekly" | "monthly") => void;
   findLatestShareForComposition: (compositionId: string) => CompositionShareItem | null;
   formatDate: (value: string) => string;
 };
@@ -182,6 +183,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
     onRevokeShare,
     onOpenHistoryItem,
     onRetrieve,
+    onUseRecapPrompt,
     findLatestShareForComposition,
     formatDate,
   } = props;
@@ -328,12 +330,24 @@ export function CopilotPanel(props: CopilotPanelProps) {
                 <>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl bg-white/85 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Weekly recap</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Weekly recap ritual</p>
                       <p className="mt-2 text-sm text-[var(--ink-800)]">{memorySnapshot.weeklyRecap.summary}</p>
+                      <p className="mt-3 text-xs text-[var(--ink-600)]">
+                        Prompt: What did this week keep trying to teach you, and what deserves a more honest follow-up now?
+                      </p>
+                      <Button size="sm" variant="secondary" className="mt-3" onClick={() => onUseRecapPrompt("weekly")}>
+                        Reflect on this week
+                      </Button>
                     </div>
                     <div className="rounded-xl bg-white/85 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Monthly recap</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Monthly recap ritual</p>
                       <p className="mt-2 text-sm text-[var(--ink-800)]">{memorySnapshot.monthlyRecap.summary}</p>
+                      <p className="mt-3 text-xs text-[var(--ink-600)]">
+                        Prompt: Looking across this month, what pattern feels most important to understand before you move forward?
+                      </p>
+                      <Button size="sm" variant="secondary" className="mt-3" onClick={() => onUseRecapPrompt("monthly")}>
+                        Reflect on this month
+                      </Button>
                     </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">

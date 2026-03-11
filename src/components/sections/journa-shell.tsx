@@ -592,6 +592,34 @@ export function JournaShell() {
     };
   }
 
+  function useRecapPrompt(window: "weekly" | "monthly") {
+    if (!memorySnapshot) {
+      setError("No recap is available yet.");
+      return;
+    }
+
+    const recap = window === "weekly" ? memorySnapshot.weeklyRecap : memorySnapshot.monthlyRecap;
+    const ritualPrompt =
+      window === "weekly"
+        ? `Weekly recap:\n${recap.summary}\n\nReflect on this week. What did it keep trying to teach you, and what deserves a more honest follow-up now?`
+        : `Monthly recap:\n${recap.summary}\n\nReflect on this month. What pattern feels most important to understand before you move forward?`;
+
+    const recapMood = moods.includes((recap.topMood ?? "") as NarrativeMood)
+      ? ((recap.topMood ?? "serious") as NarrativeMood)
+      : "serious";
+
+    setComposeInput((prev) => ({
+      ...prev,
+      mode: "essay",
+      mood: recapMood,
+      stylePreset: "balanced",
+      sourceText: ritualPrompt,
+      voiceNotes: "Reflect with clarity, honesty, and emotional precision. Keep the writing grounded in the user's own life.",
+    }));
+    setMode("copilot");
+    setComposeStatus(window === "weekly" ? "Weekly reflection ritual loaded." : "Monthly reflection ritual loaded.");
+  }
+
   async function handleRetrieve() {
     if (!retrievalQuery.trim()) {
       setError("Enter something you want Journa to look for.");
@@ -1156,6 +1184,7 @@ export function JournaShell() {
           onRevokeShare={revokeShare}
           onOpenHistoryItem={openHistoryItem}
           onRetrieve={handleRetrieve}
+          onUseRecapPrompt={useRecapPrompt}
           findLatestShareForComposition={findLatestShareForComposition}
           formatDate={formatDate}
         />
