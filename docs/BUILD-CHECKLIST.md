@@ -33,4 +33,4 @@
 
 - [x] Add semantic retrieval / embeddings carefully
 - [ ] Improve sharing and collections polish
-- [ ] Add more advanced memory timelines and trend views
+- [x] Add more advanced memory timelines and trend views

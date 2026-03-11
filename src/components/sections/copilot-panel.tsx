@@ -55,6 +55,8 @@ type MemorySnapshot = {
     topThemes: string[];
     summary: string;
   };
+  timelinePoints: Array<{ date: string; count: number; topMood: string | null }>;
+  moodTrend: Array<{ mood: string; count: number }>;
   recentEntryCount: number;
 };
 
@@ -369,6 +371,29 @@ export function CopilotPanel(props: CopilotPanelProps) {
                             {item.theme} × {item.count}
                           </span>
                         )) : <span className="text-xs text-[var(--ink-600)]">Themes will appear as you write more.</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl bg-white/85 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Mood trend</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {memorySnapshot.moodTrend.length > 0 ? memorySnapshot.moodTrend.map((item) => (
+                          <span key={item.mood} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
+                            {item.mood} · {item.count}
+                          </span>
+                        )) : <span className="text-xs text-[var(--ink-600)]">Not enough mood history yet.</span>}
+                      </div>
+                    </div>
+                    <div className="rounded-xl bg-white/85 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recent timeline</p>
+                      <div className="mt-2 space-y-2">
+                        {memorySnapshot.timelinePoints.length > 0 ? memorySnapshot.timelinePoints.map((point) => (
+                          <div key={point.date} className="flex items-center justify-between rounded-xl bg-[var(--sand-50)] px-3 py-2 text-xs text-[var(--ink-800)]">
+                            <span>{point.date}</span>
+                            <span>{point.count} entries{point.topMood ? ` · ${point.topMood}` : ""}</span>
+                          </div>
+                        )) : <span className="text-xs text-[var(--ink-600)]">Timeline points will appear as you write more.</span>}
                       </div>
                     </div>
                   </div>

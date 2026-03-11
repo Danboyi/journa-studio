@@ -177,6 +177,8 @@ export function JournaShell() {
       topThemes: string[];
       summary: string;
     };
+    timelinePoints: Array<{ date: string; count: number; topMood: string | null }>;
+    moodTrend: Array<{ mood: string; count: number }>;
     recentEntryCount: number;
   } | null>(null);
 
@@ -401,6 +403,8 @@ export function JournaShell() {
           topThemes: string[];
           summary: string;
         };
+        timelinePoints: Array<{ date: string; count: number; topMood: string | null }>;
+        moodTrend: Array<{ mood: string; count: number }>;
         recentEntryCount: number;
         error?: string;
       };
