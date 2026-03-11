@@ -122,7 +122,7 @@ export function LifeOnboardingCard({ enabled, onBuildNarrative }: LifeOnboarding
       </div>
 
       <p className="mt-2 text-sm text-[var(--ink-700)]">
-        Answer these once. Journa will use them as your narrative core for autobiographies, SOPs, essays, and story drafts.
+        Answer these once. Journa will use them to understand your deeper context, reflect more intelligently, and build stronger long-form narratives when you want them.
       </p>
 
       <div className="mt-4 h-2 w-full rounded-full bg-white/70">

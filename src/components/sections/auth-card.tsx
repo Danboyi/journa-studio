@@ -73,9 +73,15 @@ export function AuthCard({
       <p className="mt-2 text-xs text-[var(--ink-700)]">
         Auth uses secure HTTP-only cookies. For sign-up, confirm email if your Supabase project enforces verification.
       </p>
+      <div className="mt-4 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)]">
+        <p className="font-semibold text-[var(--ink-900)]">What you are creating here</p>
+        <p className="mt-1 text-[var(--ink-700)]">
+          Not a public feed. Not a productivity dashboard. Journa is a private place to capture experience, reflect with care, and build a memory you can return to.
+        </p>
+      </div>
       <div className="mt-4 grid gap-2 text-xs text-[var(--ink-700)] sm:grid-cols-3">
         <div className="rounded-2xl bg-[var(--sand-50)] p-3">Your writing stays tied to your account, not a public feed.</div>
-        <div className="rounded-2xl bg-[var(--sand-50)] p-3">Use Copilot to reflect and rewrite without flattening your voice.</div>
+        <div className="rounded-2xl bg-[var(--sand-50)] p-3">Copilot is here to clarify meaning and preserve your voice.</div>
         <div className="rounded-2xl bg-[var(--sand-50)] p-3">Sharing is optional and explicit — private remains the default posture.</div>
       </div>
     </Card>
