@@ -1269,7 +1269,7 @@ export function JournaShell() {
                         <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mood} · {formatDate(item.created_at)}</p>
                         <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
                         <p className="mt-2 text-xs text-[var(--ink-500)]">{item.whyRelated}</p>
-                        <Button size="sm" variant="secondary" className="mt-3" onClick={() => void openRelatedMemory("entry", item.id)}>
+                        <Button size="sm" variant="secondary" className="mt-3 w-full sm:w-auto" onClick={() => void openRelatedMemory("entry", item.id)}>
                           Open memory
                         </Button>
                       </div>
@@ -1285,7 +1285,7 @@ export function JournaShell() {
                         <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mode} · {item.mood} · {formatDate(item.created_at)}</p>
                         <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
                         <p className="mt-2 text-xs text-[var(--ink-500)]">{item.whyRelated}</p>
-                        <Button size="sm" variant="secondary" className="mt-3" onClick={() => void openRelatedMemory("composition", item.id)}>
+                        <Button size="sm" variant="secondary" className="mt-3 w-full sm:w-auto" onClick={() => void openRelatedMemory("composition", item.id)}>
                           Open memory
                         </Button>
                       </div>

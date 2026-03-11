@@ -25,7 +25,7 @@
 
 - [x] Add stronger recurrence summaries (“you’ve returned to this before”)
 - [x] Add one-click open actions for related memories
-- [ ] Improve mobile UX for journaling, reflection, and retrieval
+- [x] Improve mobile UX for journaling, reflection, and retrieval
 - [x] Turn weekly/monthly recaps into guided reflection rituals
 - [x] Add a clearer privacy/trust settings surface
 

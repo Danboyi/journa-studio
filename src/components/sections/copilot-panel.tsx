@@ -309,7 +309,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
         {composeStatus ? <p className="mt-2 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
       </Card>
 
-      <Card className="p-5 sm:p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-sm font-semibold tracking-[0.12em] text-[var(--ink-700)] uppercase">Life-cycle prompts</h3>
         <ul className="mt-3 space-y-3 text-sm text-[var(--ink-800)]">
           {lifePrompts.map((prompt) => (
@@ -335,7 +335,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
                       <p className="mt-3 text-xs text-[var(--ink-600)]">
                         Prompt: What did this week keep trying to teach you, and what deserves a more honest follow-up now?
                       </p>
-                      <Button size="sm" variant="secondary" className="mt-3" onClick={() => onUseRecapPrompt("weekly")}>
+                      <Button size="sm" variant="secondary" className="mt-3 w-full sm:w-auto" onClick={() => onUseRecapPrompt("weekly")}>
                         Reflect on this week
                       </Button>
                     </div>
@@ -345,7 +345,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
                       <p className="mt-3 text-xs text-[var(--ink-600)]">
                         Prompt: Looking across this month, what pattern feels most important to understand before you move forward?
                       </p>
-                      <Button size="sm" variant="secondary" className="mt-3" onClick={() => onUseRecapPrompt("monthly")}>
+                      <Button size="sm" variant="secondary" className="mt-3 w-full sm:w-auto" onClick={() => onUseRecapPrompt("monthly")}>
                         Reflect on this month
                       </Button>
                     </div>
