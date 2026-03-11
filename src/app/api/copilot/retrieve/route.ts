@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAccessToken } from "@/lib/auth/token";
+import { rerankBySemanticSimilarity } from "@/lib/ai/embeddings";
 import { createSupabaseUserClient } from "@/lib/supabase/server";
 import { attachRequestId, beginRequest, endRequest, failRequest } from "@/lib/telemetry";
 
@@ -145,7 +146,7 @@ export async function GET(request: NextRequest) {
       return attachRequestId(response, trace.requestId);
     }
 
-    const matchedEntries = dedupeByTitle(
+    const lexicalEntries = dedupeByTitle(
       (entries ?? [])
         .map((entry) => {
           const haystack = `${entry.headline}\n${entry.body}`;
@@ -161,15 +162,16 @@ export async function GET(request: NextRequest) {
                 score,
                 snippet: makeSnippet(entry.body, tokens[0]),
                 whyRelated: buildWhyRelated(tokens, haystack, entry.mood),
+                semanticText: haystack,
               }
             : null;
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item))
         .filter((item) => item.snippet.trim().length > 20)
         .sort((a, b) => b.score - a.score),
-    ).slice(0, 8);
+    ).slice(0, 12);
 
-    const matchedCompositions = dedupeByTitle(
+    const lexicalCompositions = dedupeByTitle(
       (compositions ?? [])
         .map((item) => {
           const reflectionText = item.reflection && typeof item.reflection === "object" ? JSON.stringify(item.reflection) : "";
@@ -187,18 +189,30 @@ export async function GET(request: NextRequest) {
                 score,
                 snippet: makeSnippet(`${item.excerpt} ${item.draft}`, tokens[0]),
                 whyRelated: buildWhyRelated(tokens, haystack, item.mood),
+                semanticText: haystack,
               }
             : null;
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item))
         .filter((item) => item.snippet.trim().length > 20)
         .sort((a, b) => b.score - a.score),
-    ).slice(0, 8);
+    ).slice(0, 12);
+
+    const [matchedEntries, matchedCompositions] = await Promise.all([
+      rerankBySemanticSimilarity(query, lexicalEntries),
+      rerankBySemanticSimilarity(query, lexicalCompositions),
+    ]);
 
     const response = NextResponse.json({
       query,
-      entries: matchedEntries,
-      compositions: matchedCompositions,
+      entries: matchedEntries.slice(0, 8).map((item) => {
+        const { semanticText: _semanticText, ...rest } = item;
+        return rest;
+      }),
+      compositions: matchedCompositions.slice(0, 8).map((item) => {
+        const { semanticText: _semanticText, ...rest } = item;
+        return rest;
+      }),
     });
 
     endRequest(trace, 200, {
