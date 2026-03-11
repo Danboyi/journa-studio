@@ -133,6 +133,20 @@ export function JournaShell() {
       created_at: string;
       reflection: NonNullable<ComposeResponse["reflection"]>;
     }>;
+    weeklyRecap: {
+      days: number;
+      entryCount: number;
+      topMood: string | null;
+      topThemes: string[];
+      summary: string;
+    };
+    monthlyRecap: {
+      days: number;
+      entryCount: number;
+      topMood: string | null;
+      topThemes: string[];
+      summary: string;
+    };
     recentEntryCount: number;
   } | null>(null);
 
@@ -294,6 +308,20 @@ export function JournaShell() {
           created_at: string;
           reflection: NonNullable<ComposeResponse["reflection"]>;
         }>;
+        weeklyRecap: {
+          days: number;
+          entryCount: number;
+          topMood: string | null;
+          topThemes: string[];
+          summary: string;
+        };
+        monthlyRecap: {
+          days: number;
+          entryCount: number;
+          topMood: string | null;
+          topThemes: string[];
+          summary: string;
+        };
         recentEntryCount: number;
         error?: string;
       };

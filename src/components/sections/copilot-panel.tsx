@@ -41,6 +41,20 @@ type MemorySnapshot = {
       followUpQuestion: string;
     };
   }>;
+  weeklyRecap: {
+    days: number;
+    entryCount: number;
+    topMood: string | null;
+    topThemes: string[];
+    summary: string;
+  };
+  monthlyRecap: {
+    days: number;
+    entryCount: number;
+    topMood: string | null;
+    topThemes: string[];
+    summary: string;
+  };
   recentEntryCount: number;
 };
 
@@ -289,28 +303,40 @@ export function CopilotPanel(props: CopilotPanelProps) {
                 Your saved compositions live here. Open past work, export it, or organize it when you need to.
               </p>
               {memorySnapshot ? (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl bg-white/85 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring moods</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {memorySnapshot.recurringMoods.length > 0 ? memorySnapshot.recurringMoods.map((item) => (
-                        <span key={item.mood} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
-                          {item.mood} × {item.count}
-                        </span>
-                      )) : <span className="text-xs text-[var(--ink-600)]">Not enough history yet.</span>}
+                <>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl bg-white/85 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Weekly recap</p>
+                      <p className="mt-2 text-sm text-[var(--ink-800)]">{memorySnapshot.weeklyRecap.summary}</p>
+                    </div>
+                    <div className="rounded-xl bg-white/85 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Monthly recap</p>
+                      <p className="mt-2 text-sm text-[var(--ink-800)]">{memorySnapshot.monthlyRecap.summary}</p>
                     </div>
                   </div>
-                  <div className="rounded-xl bg-white/85 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring themes</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {memorySnapshot.recurringThemes.length > 0 ? memorySnapshot.recurringThemes.map((item) => (
-                        <span key={item.theme} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
-                          {item.theme} × {item.count}
-                        </span>
-                      )) : <span className="text-xs text-[var(--ink-600)]">Themes will appear as you write more.</span>}
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl bg-white/85 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring moods</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {memorySnapshot.recurringMoods.length > 0 ? memorySnapshot.recurringMoods.map((item) => (
+                          <span key={item.mood} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
+                            {item.mood} × {item.count}
+                          </span>
+                        )) : <span className="text-xs text-[var(--ink-600)]">Not enough history yet.</span>}
+                      </div>
+                    </div>
+                    <div className="rounded-xl bg-white/85 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring themes</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {memorySnapshot.recurringThemes.length > 0 ? memorySnapshot.recurringThemes.map((item) => (
+                          <span key={item.theme} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
+                            {item.theme} × {item.count}
+                          </span>
+                        )) : <span className="text-xs text-[var(--ink-600)]">Themes will appear as you write more.</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               ) : null}
               <div className="mt-3 space-y-2">
                 {isHistoryLoading ? <p className="text-sm text-[var(--ink-700)]">Loading history...</p> : null}

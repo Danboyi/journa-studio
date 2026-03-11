@@ -20,6 +20,49 @@ function tokenize(input: string) {
     .filter((word) => word.length >= 4 && !STOP_WORDS.has(word));
 }
 
+function buildWindowSummary(
+  entries: Array<{ headline: string; body: string; mood: string; created_at: string }>,
+  days: number,
+) {
+  const threshold = Date.now() - days * 24 * 60 * 60 * 1000;
+  const windowEntries = entries.filter((entry) => new Date(entry.created_at).getTime() >= threshold);
+  const moodCounts = new Map<string, number>();
+  const tokenCounts = new Map<string, number>();
+
+  for (const entry of windowEntries) {
+    moodCounts.set(entry.mood, (moodCounts.get(entry.mood) ?? 0) + 1);
+    for (const token of tokenize(`${entry.headline} ${entry.body}`)) {
+      tokenCounts.set(token, (tokenCounts.get(token) ?? 0) + 1);
+    }
+  }
+
+  const topMood = [...moodCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const topThemes = [...tokenCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([theme]) => theme);
+
+  let summary = "Not enough writing yet in this window to form a recap.";
+
+  if (windowEntries.length > 0) {
+    summary = [
+      `You captured ${windowEntries.length} journal ${windowEntries.length === 1 ? "entry" : "entries"} in the last ${days} days.`,
+      topMood ? `The strongest recurring mood was ${topMood}.` : null,
+      topThemes.length > 0 ? `The themes that kept resurfacing were ${topThemes.join(", ")}.` : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return {
+    days,
+    entryCount: windowEntries.length,
+    topMood,
+    topThemes,
+    summary,
+  };
+}
+
 export async function GET(request: NextRequest) {
   const trace = beginRequest(request, "api.copilot.memory");
 
@@ -107,10 +150,15 @@ export async function GET(request: NextRequest) {
         reflection: item.reflection,
       }));
 
+    const weeklyRecap = buildWindowSummary(entries ?? [], 7);
+    const monthlyRecap = buildWindowSummary(entries ?? [], 30);
+
     const response = NextResponse.json({
       recurringMoods,
       recurringThemes,
       reflectionMoments,
+      weeklyRecap,
+      monthlyRecap,
       recentEntryCount: entries?.length ?? 0,
     });
 
