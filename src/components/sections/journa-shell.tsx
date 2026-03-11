@@ -67,9 +67,9 @@ const copilotTemplates: Array<{
   stylePreset: StylePreset;
   mood: NarrativeMood;
 }> = [
-  { id: "sop", label: "SOP Pro", mode: "statement-of-purpose", stylePreset: "academic", mood: "serious" },
-  { id: "bio", label: "Bio Snapshot", mode: "biography", stylePreset: "balanced", mood: "serious" },
-  { id: "life", label: "Life Story", mode: "autobiography", stylePreset: "soulful", mood: "serious" },
+  { id: "reflect", label: "Reflect on this", mode: "essay", stylePreset: "balanced", mood: "serious" },
+  { id: "story", label: "Turn this into a story", mode: "story", stylePreset: "cinematic", mood: "serious" },
+  { id: "life", label: "Shape a life narrative", mode: "autobiography", stylePreset: "soulful", mood: "serious" },
 ];
 
 function formatDate(value: string) {
@@ -840,15 +840,20 @@ export function JournaShell() {
       {mode === "journal" ? (
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <Card className="p-5 sm:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[var(--ink-900)]">Daily Capture</h2>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-[var(--ink-900)]">Daily Capture</h2>
+                <p className="mt-1 text-sm text-[var(--ink-700)]">
+                  Start with one honest note. Journa can help you reflect on it after.
+                </p>
+              </div>
               <Badge>{mood}</Badge>
             </div>
             <input
               value={headline}
               onChange={(event) => setHeadline(event.target.value)}
               className="mb-3 h-11 w-full rounded-xl border border-[var(--ink-300)] px-4 text-sm"
-              placeholder="Headline"
+              placeholder="Give this moment a simple title"
             />
             <Textarea
               value={journalText}
@@ -868,9 +873,17 @@ export function JournaShell() {
                 </Button>
               ))}
             </div>
+            <div className="mt-4 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)]">
+              <p className="font-semibold text-[var(--ink-900)]">The ideal first-use loop</p>
+              <ol className="mt-2 space-y-1 text-[var(--ink-700)]">
+                <li>1. Write what happened in your natural voice.</li>
+                <li>2. Save it privately to your journal.</li>
+                <li>3. Send it into Copilot for reflection or a polished rewrite.</li>
+              </ol>
+            </div>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button onClick={saveEntry} disabled={!isAuthenticated || isSavingEntry}>
-                {isSavingEntry ? "Saving..." : "Save entry"}
+                {isSavingEntry ? "Saving..." : "Save privately"}
               </Button>
               <Button
                 variant="secondary"
@@ -879,14 +892,14 @@ export function JournaShell() {
                   setMode("copilot");
                 }}
               >
-                <Sparkles className="mr-2 h-4 w-4" /> Use entry in Copilot
+                <Sparkles className="mr-2 h-4 w-4" /> Reflect with Copilot
               </Button>
             </div>
           </Card>
 
           <Card className="p-5 sm:p-6">
             <h3 className="text-sm font-semibold tracking-[0.12em] text-[var(--ink-700)] uppercase">
-              {isAuthenticated ? "Recent entries" : "Smart prompts"}
+              {isAuthenticated ? "Recent entries" : "Start here"}
             </h3>
             {isAuthenticated ? (
               <div className="mt-3 space-y-3 text-sm text-[var(--ink-800)]">
@@ -905,25 +918,40 @@ export function JournaShell() {
                 ))}
               </div>
             ) : (
-              <ul className="mt-3 space-y-3 text-sm text-[var(--ink-800)]">
-                {dailyPrompts.map((prompt) => (
-                  <li key={prompt} className="rounded-xl bg-white/80 p-3">
-                    {prompt}
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-3 space-y-3 text-sm text-[var(--ink-800)]">
+                <div className="rounded-xl bg-white/80 p-4">
+                  <p className="font-semibold text-[var(--ink-900)]">What makes Journa different</p>
+                  <p className="mt-1 text-[var(--ink-700)]">
+                    It is not just a place to store writing. It helps you reflect, remember patterns, and turn rough notes into clear personal narrative.
+                  </p>
+                </div>
+                <ul className="space-y-3">
+                  {dailyPrompts.map((prompt) => (
+                    <li key={prompt} className="rounded-xl bg-white/80 p-3">
+                      {prompt}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </Card>
         </section>
       ) : (
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
           <Card className="p-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-[var(--ink-900)]">Copilot Composer</h2>
+            <h2 className="text-xl font-semibold text-[var(--ink-900)]">Copilot</h2>
             <p className="mt-1 text-sm text-[var(--ink-700)]">
-              Transform rough notes into a polished draft while preserving voice.
+              Start with reflection first, then shape your writing into something polished when you need to.
             </p>
 
-            <label className="mt-4 block text-sm font-medium">Quick templates</label>
+            <div className="mt-4 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)]">
+              <p className="font-semibold text-[var(--ink-900)]">Recommended flow</p>
+              <p className="mt-1 text-[var(--ink-700)]">
+                Use Copilot to understand what you wrote before reaching for heavy transformation modes.
+              </p>
+            </div>
+
+            <label className="mt-4 block text-sm font-medium">Quick actions</label>
             <div className="mt-2 flex flex-wrap gap-2">
               {copilotTemplates.map((template) => (
                 <Button
@@ -944,7 +972,7 @@ export function JournaShell() {
               ))}
             </div>
 
-            <label className="mt-4 block text-sm font-medium">Writing output</label>
+            <label className="mt-4 block text-sm font-medium">Output format</label>
             <div className="mt-2 flex flex-wrap gap-2">
               {writingModes.map((writingMode) => (
                 <Button
@@ -960,7 +988,7 @@ export function JournaShell() {
               ))}
             </div>
 
-            <label className="mt-4 block text-sm font-medium">Style pack</label>
+            <label className="mt-4 block text-sm font-medium">Style</label>
             <div className="mt-2 flex flex-wrap gap-2">
               {stylePresets.map((preset) => (
                 <Button
@@ -975,6 +1003,9 @@ export function JournaShell() {
             </div>
 
             <label className="mt-4 block text-sm font-medium">Voice profile</label>
+            <p className="mt-1 text-xs text-[var(--ink-700)]">
+              Tell Copilot how close it should stay to your natural rhythm, phrasing, and emotional tone.
+            </p>
             <Textarea
               className="mt-2 min-h-[100px]"
               value={composeInput.voiceNotes}
@@ -984,6 +1015,9 @@ export function JournaShell() {
             />
 
             <label className="mt-4 block text-sm font-medium">Source notes</label>
+            <p className="mt-1 text-xs text-[var(--ink-700)]">
+              Journal entries, messy thoughts, memory fragments, project notes — anything real is useful here.
+            </p>
             <Textarea
               className="mt-2 min-h-[180px]"
               value={composeInput.sourceText}
@@ -1007,7 +1041,7 @@ export function JournaShell() {
             </div>
 
             <Button className="mt-5 w-full" onClick={generateDraft} disabled={isComposeLoading}>
-              {isComposeLoading ? "Composing..." : "Generate polished draft"}
+              {isComposeLoading ? "Thinking..." : "Reflect or rewrite"}
             </Button>
             {composeStatus ? <p className="mt-2 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
           </Card>
