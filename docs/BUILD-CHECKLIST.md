@@ -27,7 +27,7 @@
 - [x] Add one-click open actions for related memories
 - [ ] Improve mobile UX for journaling, reflection, and retrieval
 - [x] Turn weekly/monthly recaps into guided reflection rituals
-- [ ] Add a clearer privacy/trust settings surface
+- [x] Add a clearer privacy/trust settings surface
 
 ## Later
 

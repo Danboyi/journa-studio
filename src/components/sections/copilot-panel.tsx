@@ -443,6 +443,36 @@ export function CopilotPanel(props: CopilotPanelProps) {
               ) : null}
             </div>
 
+            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Privacy & trust</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-white/85 p-3">
+                  <p className="text-sm font-semibold text-[var(--ink-900)]">Private by default</p>
+                  <p className="mt-1 text-sm text-[var(--ink-700)]">
+                    Your journal and reflections stay tied to your account. Nothing becomes public unless you explicitly create a share link or collection.
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white/85 p-3">
+                  <p className="text-sm font-semibold text-[var(--ink-900)]">Copilot posture</p>
+                  <p className="mt-1 text-sm text-[var(--ink-700)]">
+                    Copilot is meant to clarify meaning, preserve tone, and help you reflect — not flatten your voice into generic output.
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white/85 p-3">
+                  <p className="text-sm font-semibold text-[var(--ink-900)]">Sharing is explicit</p>
+                  <p className="mt-1 text-sm text-[var(--ink-700)]">
+                    Share links are optional, revocable, and can be time-limited. Privacy is the default posture, not an advanced setting.
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white/85 p-3">
+                  <p className="text-sm font-semibold text-[var(--ink-900)]">Control surfaces</p>
+                  <p className="mt-1 text-sm text-[var(--ink-700)]">
+                    You can export writing, revoke links, and keep collections private. Journa should feel safe enough for honesty, not performance.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {memorySnapshot?.reflectionMoments?.length ? (
               <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Recent reflection signals</p>
