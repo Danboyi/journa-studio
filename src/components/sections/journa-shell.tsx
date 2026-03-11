@@ -727,13 +727,18 @@ export function JournaShell() {
         className="relative overflow-hidden rounded-[2.2rem] border border-white/50 bg-[radial-gradient(circle_at_top_left,_#cffafe_0,_#f8fafc_50%,_#fef3c7_100%)] p-6 sm:p-10"
       >
         <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[var(--brand-300)]/45 blur-3xl" />
-        <Badge>My Journa</Badge>
+        <Badge>Private memory studio</Badge>
         <h1 className="mt-4 max-w-3xl text-4xl leading-tight font-semibold tracking-tight text-[var(--ink-950)] sm:text-5xl">
-          Personal journal meets an AI co-writer that keeps your real voice.
+          Write privately. Reflect deeply. Remember clearly.
         </h1>
         <p className="mt-4 max-w-2xl text-base text-[var(--ink-700)] sm:text-lg">
-          Capture your day in plain human language. Journa asks better questions, keeps missing details, and composes polished stories, essays, SOPs, biographies, and life narratives in your tone.
+          Journa turns everyday thoughts into a private memory system. Capture your day in natural language, get thoughtful AI reflection, and transform raw notes into polished writing without losing your voice.
         </p>
+        <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-[var(--ink-700)] sm:text-sm">
+          <span className="rounded-full bg-white/70 px-3 py-1">Private by default</span>
+          <span className="rounded-full bg-white/70 px-3 py-1">AI that preserves your tone</span>
+          <span className="rounded-full bg-white/70 px-3 py-1">Built for reflection, not noise</span>
+        </div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button
             variant={mode === "journal" ? "default" : "secondary"}
@@ -824,6 +829,11 @@ export function JournaShell() {
           <p className="mt-2 text-xs text-[var(--ink-700)]">
             Auth uses secure HTTP-only cookies. For sign-up, confirm email if your Supabase project enforces verification.
           </p>
+          <div className="mt-4 grid gap-2 text-xs text-[var(--ink-700)] sm:grid-cols-3">
+            <div className="rounded-2xl bg-[var(--sand-50)] p-3">Your writing stays tied to your account, not a public feed.</div>
+            <div className="rounded-2xl bg-[var(--sand-50)] p-3">Use Copilot to reflect and rewrite without flattening your voice.</div>
+            <div className="rounded-2xl bg-[var(--sand-50)] p-3">Sharing is optional and explicit — private remains the default posture.</div>
+          </div>
         </Card>
       ) : null}
 
