@@ -18,6 +18,7 @@ import type {
 type CopilotTemplate = {
   id: string;
   label: string;
+  description?: string;
   mode: WritingMode;
   stylePreset: StylePreset;
   mood: NarrativeMood;
@@ -139,12 +140,11 @@ export function CopilotPanel(props: CopilotPanelProps) {
         </div>
 
         <label className="mt-4 block text-sm font-medium">Quick actions</label>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {copilotTemplates.map((template) => (
-            <Button
+            <button
               key={template.id}
-              variant="secondary"
-              size="sm"
+              type="button"
               onClick={() =>
                 setComposeInput((prev) => ({
                   ...prev,
@@ -153,9 +153,11 @@ export function CopilotPanel(props: CopilotPanelProps) {
                   stylePreset: template.stylePreset,
                 }))
               }
+              className="rounded-2xl border border-[var(--ink-300)] bg-white/85 p-3 text-left transition hover:border-[var(--brand-700)] hover:bg-white"
             >
-              {template.label}
-            </Button>
+              <p className="text-sm font-semibold text-[var(--ink-900)]">{template.label}</p>
+              {template.description ? <p className="mt-1 text-xs text-[var(--ink-700)]">{template.description}</p> : null}
+            </button>
           ))}
         </div>
 

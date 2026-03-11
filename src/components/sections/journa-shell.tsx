@@ -65,13 +65,35 @@ const stylePresets: StylePreset[] = [
 const copilotTemplates: Array<{
   id: string;
   label: string;
+  description?: string;
   mode: WritingMode;
   stylePreset: StylePreset;
   mood: NarrativeMood;
 }> = [
-  { id: "reflect", label: "Reflect on this", mode: "essay", stylePreset: "balanced", mood: "serious" },
-  { id: "story", label: "Turn this into a story", mode: "story", stylePreset: "cinematic", mood: "serious" },
-  { id: "life", label: "Shape a life narrative", mode: "autobiography", stylePreset: "soulful", mood: "serious" },
+  {
+    id: "reflect",
+    label: "Reflect on this",
+    description: "Clarify what the note means and what feeling sits underneath it.",
+    mode: "essay",
+    stylePreset: "balanced",
+    mood: "serious",
+  },
+  {
+    id: "story",
+    label: "Turn this into a story",
+    description: "Shape the raw material into a more narrative and vivid piece.",
+    mode: "story",
+    stylePreset: "cinematic",
+    mood: "serious",
+  },
+  {
+    id: "life",
+    label: "Shape a life narrative",
+    description: "Connect the moment to identity, memory, and longer personal themes.",
+    mode: "autobiography",
+    stylePreset: "soulful",
+    mood: "serious",
+  },
 ];
 
 function formatDate(value: string) {
