@@ -920,6 +920,21 @@ export function JournaShell() {
     }
   }
 
+  function openEntryItem(entryId: string) {
+    const entry = entries.find((item) => item.id === entryId);
+
+    if (!entry) {
+      setError("Could not open that journal entry.");
+      return;
+    }
+
+    setHeadline(entry.headline);
+    setJournalText(entry.body);
+    setMood(entry.mood);
+    setMode("journal");
+    setComposeStatus("Opened related journal entry.");
+  }
+
   async function openHistoryItem(item: CompositionHistoryItem) {
     setComposeInput({
       mode: item.mode,
@@ -950,6 +965,22 @@ export function JournaShell() {
     }
 
     setMode("copilot");
+  }
+
+  async function openRelatedMemory(kind: "entry" | "composition", id: string) {
+    if (kind === "entry") {
+      openEntryItem(id);
+      return;
+    }
+
+    const composition = compositions.find((item) => item.id === id);
+    if (composition) {
+      await openHistoryItem(composition);
+      setComposeStatus("Opened related reflection.");
+      return;
+    }
+
+    setError("Could not open that related memory.");
   }
 
   async function openComposeJobItem(job: ComposeJobItem) {
@@ -1209,6 +1240,9 @@ export function JournaShell() {
                         <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mood} · {formatDate(item.created_at)}</p>
                         <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
                         <p className="mt-2 text-xs text-[var(--ink-500)]">{item.whyRelated}</p>
+                        <Button size="sm" variant="secondary" className="mt-3" onClick={() => void openRelatedMemory("entry", item.id)}>
+                          Open memory
+                        </Button>
                       </div>
                     )) : <p className="text-sm text-[var(--ink-600)]">No nearby entries surfaced yet.</p>}
                   </div>
@@ -1222,6 +1256,9 @@ export function JournaShell() {
                         <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mode} · {item.mood} · {formatDate(item.created_at)}</p>
                         <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
                         <p className="mt-2 text-xs text-[var(--ink-500)]">{item.whyRelated}</p>
+                        <Button size="sm" variant="secondary" className="mt-3" onClick={() => void openRelatedMemory("composition", item.id)}>
+                          Open memory
+                        </Button>
                       </div>
                     )) : <p className="text-sm text-[var(--ink-600)]">No nearby reflections surfaced yet.</p>}
                   </div>
