@@ -19,7 +19,7 @@
 
 - [x] Improve retrieval quality and ranking
 - [x] Add “why this is related” explanation to memory matches
-- [ ] Reduce weak or noisy related-memory matches
+- [x] Reduce weak or noisy related-memory matches
 
 ## Next
 

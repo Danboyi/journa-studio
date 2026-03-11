@@ -67,6 +67,22 @@ function buildWhyRelated(tokens: string[], input: string, mood?: string | null) 
     : `Related because it echoes ${tokenText}.`;
 }
 
+function normalizeKey(input: string) {
+  return input.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function dedupeByTitle<T extends { title: string; score: number }>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = normalizeKey(item.title);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function GET(request: NextRequest) {
   const trace = beginRequest(request, "api.copilot.retrieve");
 
@@ -129,49 +145,55 @@ export async function GET(request: NextRequest) {
       return attachRequestId(response, trace.requestId);
     }
 
-    const matchedEntries = (entries ?? [])
-      .map((entry) => {
-        const haystack = `${entry.headline}\n${entry.body}`;
-        const score = scoreText(haystack, tokens);
-        return score > 0
-          ? {
-              id: entry.id,
-              kind: "entry" as const,
-              title: entry.headline,
-              mood: entry.mood,
-              created_at: entry.created_at,
-              score,
-              snippet: makeSnippet(entry.body, tokens[0]),
-              whyRelated: buildWhyRelated(tokens, haystack, entry.mood),
-            }
-          : null;
-      })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
+    const matchedEntries = dedupeByTitle(
+      (entries ?? [])
+        .map((entry) => {
+          const haystack = `${entry.headline}\n${entry.body}`;
+          const score = scoreText(haystack, tokens);
+          const minScore = tokens.length > 1 ? 4 : 3;
+          return score >= minScore
+            ? {
+                id: entry.id,
+                kind: "entry" as const,
+                title: entry.headline,
+                mood: entry.mood,
+                created_at: entry.created_at,
+                score,
+                snippet: makeSnippet(entry.body, tokens[0]),
+                whyRelated: buildWhyRelated(tokens, haystack, entry.mood),
+              }
+            : null;
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+        .filter((item) => item.snippet.trim().length > 20)
+        .sort((a, b) => b.score - a.score),
+    ).slice(0, 8);
 
-    const matchedCompositions = (compositions ?? [])
-      .map((item) => {
-        const reflectionText = item.reflection && typeof item.reflection === "object" ? JSON.stringify(item.reflection) : "";
-        const haystack = `${item.title}\n${item.excerpt}\n${item.draft}\n${reflectionText}`;
-        const score = scoreText(haystack, tokens);
-        return score > 0
-          ? {
-              id: item.id,
-              kind: "composition" as const,
-              title: item.title,
-              mood: item.mood,
-              mode: item.mode,
-              created_at: item.created_at,
-              score,
-              snippet: makeSnippet(`${item.excerpt} ${item.draft}`, tokens[0]),
-              whyRelated: buildWhyRelated(tokens, haystack, item.mood),
-            }
-          : null;
-      })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
+    const matchedCompositions = dedupeByTitle(
+      (compositions ?? [])
+        .map((item) => {
+          const reflectionText = item.reflection && typeof item.reflection === "object" ? JSON.stringify(item.reflection) : "";
+          const haystack = `${item.title}\n${item.excerpt}\n${item.draft}\n${reflectionText}`;
+          const score = scoreText(haystack, tokens);
+          const minScore = tokens.length > 1 ? 4 : 3;
+          return score >= minScore
+            ? {
+                id: item.id,
+                kind: "composition" as const,
+                title: item.title,
+                mood: item.mood,
+                mode: item.mode,
+                created_at: item.created_at,
+                score,
+                snippet: makeSnippet(`${item.excerpt} ${item.draft}`, tokens[0]),
+                whyRelated: buildWhyRelated(tokens, haystack, item.mood),
+              }
+            : null;
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+        .filter((item) => item.snippet.trim().length > 20)
+        .sort((a, b) => b.score - a.score),
+    ).slice(0, 8);
 
     const response = NextResponse.json({
       query,
