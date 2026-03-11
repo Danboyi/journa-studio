@@ -919,27 +919,40 @@ export function JournaShell() {
 
       {result ? (
         <Card className="mt-8 p-5 sm:p-6">
-          <h2 className="text-2xl font-semibold text-[var(--ink-950)]">{result.title}</h2>
-          <p className="mt-2 text-sm text-[var(--ink-700)]">{result.excerpt}</p>
-          {result.reflection ? (
-            <div className="mt-4 grid gap-3 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)] sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What happened</p>
-                <p className="mt-1">{result.reflection.summary}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What mattered</p>
-                <p className="mt-1">{result.reflection.whatMattered}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Beneath the surface</p>
-                <p className="mt-1">{result.reflection.beneathTheSurface}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Follow-up question</p>
-                <p className="mt-1">{result.reflection.followUpQuestion}</p>
-              </div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">
+                {result.reflection ? "Reflection result" : "Rewrite result"}
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold text-[var(--ink-950)]">{result.title}</h2>
+              <p className="mt-2 text-sm text-[var(--ink-700)]">{result.excerpt}</p>
             </div>
+          </div>
+          {result.reflection ? (
+            <>
+              <div className="mt-4 grid gap-3 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)] sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What happened</p>
+                  <p className="mt-1">{result.reflection.summary}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What mattered</p>
+                  <p className="mt-1">{result.reflection.whatMattered}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Beneath the surface</p>
+                  <p className="mt-1">{result.reflection.beneathTheSurface}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Follow-up question</p>
+                  <p className="mt-1">{result.reflection.followUpQuestion}</p>
+                </div>
+              </div>
+              <div className="mt-4 rounded-2xl border border-[var(--ink-300)] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">A good next journal prompt</p>
+                <p className="mt-2 text-sm text-[var(--ink-900)]">{result.reflection.followUpQuestion}</p>
+              </div>
+            </>
           ) : null}
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">
             {result.reflection ? "Polished reflection" : "Draft"}
@@ -947,11 +960,14 @@ export function JournaShell() {
           <pre className="mt-2 whitespace-pre-wrap rounded-2xl bg-[var(--sand-50)] p-4 text-sm leading-relaxed text-[var(--ink-900)]">
             {result.draft}
           </pre>
-          <ul className="mt-4 space-y-2 text-sm text-[var(--ink-700)]">
-            {result.editorialNotes.map((note) => (
-              <li key={note}>- {note}</li>
-            ))}
-          </ul>
+          <div className="mt-4 rounded-2xl bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What Journa changed</p>
+            <ul className="mt-3 space-y-2 text-sm text-[var(--ink-700)]">
+              {result.editorialNotes.map((note) => (
+                <li key={note}>- {note}</li>
+              ))}
+            </ul>
+          </div>
         </Card>
       ) : null}
     </div>

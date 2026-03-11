@@ -95,6 +95,10 @@ type CopilotPanelProps = {
   formatDate: (value: string) => string;
 };
 
+function isReflectionMode(mode: WritingMode) {
+  return mode === "daily-journal" || mode === "essay";
+}
+
 export function CopilotPanel(props: CopilotPanelProps) {
   const {
     isAuthenticated,
@@ -146,18 +150,29 @@ export function CopilotPanel(props: CopilotPanelProps) {
     formatDate,
   } = props;
 
+  const reflectionMode = isReflectionMode(composeInput.mode);
+
   return (
     <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
       <Card className="p-5 sm:p-6">
-        <h2 className="text-xl font-semibold text-[var(--ink-900)]">Copilot</h2>
-        <p className="mt-1 text-sm text-[var(--ink-700)]">
-          Start with reflection first, then shape your writing into something polished when you need to.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-[var(--ink-900)]">Copilot</h2>
+            <p className="mt-1 text-sm text-[var(--ink-700)]">
+              Start with reflection first, then shape your writing into something polished when you need to.
+            </p>
+          </div>
+          <span className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-700)]">
+            {reflectionMode ? "Reflection mode" : "Rewrite mode"}
+          </span>
+        </div>
 
         <div className="mt-4 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)]">
-          <p className="font-semibold text-[var(--ink-900)]">Recommended flow</p>
+          <p className="font-semibold text-[var(--ink-900)]">{reflectionMode ? "What reflection mode does" : "What rewrite mode does"}</p>
           <p className="mt-1 text-[var(--ink-700)]">
-            Use Copilot to understand what you wrote before reaching for heavy transformation modes.
+            {reflectionMode
+              ? "Journa reads for meaning first: what happened, what mattered, what sits underneath it, and what question is worth carrying forward."
+              : "Journa focuses on transformation: stronger structure, cleaner pacing, and a more finished piece without flattening your voice."}
           </p>
         </div>
 
@@ -184,6 +199,11 @@ export function CopilotPanel(props: CopilotPanelProps) {
         </div>
 
         <label className="mt-4 block text-sm font-medium">Output format</label>
+        <p className="mt-1 text-xs text-[var(--ink-700)]">
+          {reflectionMode
+            ? "Essay and daily-journal modes keep the experience closer to reflection than full transformation."
+            : "Story, autobiography, biography, and other long-form modes push toward stronger transformation."}
+        </p>
         <div className="mt-2 flex flex-wrap gap-2">
           {writingModes.map((writingMode) => (
             <Button
@@ -246,7 +266,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
         </div>
 
         <Button className="mt-5 w-full" onClick={onGenerateDraft} disabled={isComposeLoading}>
-          {isComposeLoading ? "Thinking..." : "Reflect or rewrite"}
+          {isComposeLoading ? "Thinking..." : reflectionMode ? "Generate reflection" : "Generate rewrite"}
         </Button>
         {composeStatus ? <p className="mt-2 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
       </Card>
