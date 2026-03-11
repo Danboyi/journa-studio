@@ -58,6 +58,17 @@ type MemorySnapshot = {
   recentEntryCount: number;
 };
 
+type RetrievalResult = {
+  id: string;
+  kind: "entry" | "composition";
+  title: string;
+  mood: string;
+  mode?: string;
+  created_at: string;
+  score: number;
+  snippet: string;
+};
+
 type CopilotPanelProps = {
   isAuthenticated: boolean;
   lifePrompts: string[];
@@ -89,7 +100,11 @@ type CopilotPanelProps = {
   activeRevokeShareId: string | null;
   shareStatus: string | null;
   memorySnapshot: MemorySnapshot | null;
+  retrievalQuery: string;
+  retrievalResults: { entries: RetrievalResult[]; compositions: RetrievalResult[] } | null;
+  isRetrievalLoading: boolean;
   setComposeInput: (updater: (prev: ComposeRequest) => ComposeRequest) => void;
+  setRetrievalQuery: (value: string) => void;
   setSelectedCollectionId: (value: string) => void;
   setCollectionTitle: (value: string) => void;
   setCollectionDescription: (value: string) => void;
@@ -105,6 +120,7 @@ type CopilotPanelProps = {
   onExportComposition: (compositionId: string, format: "markdown" | "text") => void;
   onRevokeShare: (shareId: string) => void;
   onOpenHistoryItem: (item: CompositionHistoryItem) => void;
+  onRetrieve: () => void;
   findLatestShareForComposition: (compositionId: string) => CompositionShareItem | null;
   formatDate: (value: string) => string;
 };
@@ -144,7 +160,11 @@ export function CopilotPanel(props: CopilotPanelProps) {
     activeRevokeShareId,
     shareStatus,
     memorySnapshot,
+    retrievalQuery,
+    retrievalResults,
+    isRetrievalLoading,
     setComposeInput,
+    setRetrievalQuery,
     setSelectedCollectionId,
     setCollectionTitle,
     setCollectionDescription,
@@ -160,6 +180,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
     onExportComposition,
     onRevokeShare,
     onOpenHistoryItem,
+    onRetrieve,
     findLatestShareForComposition,
     formatDate,
   } = props;
@@ -357,6 +378,52 @@ export function CopilotPanel(props: CopilotPanelProps) {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Memory retrieval</p>
+              <p className="mt-2 text-sm text-[var(--ink-700)]">
+                Ask Journa about a feeling, topic, or recurring concern to surface relevant writing.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={retrievalQuery}
+                  onChange={(event) => setRetrievalQuery(event.target.value)}
+                  className="h-10 flex-1 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                  placeholder='Try: "loneliness", "ambition", "family", or "when did I feel hopeful?"'
+                />
+                <Button size="sm" variant="secondary" onClick={onRetrieve} disabled={isRetrievalLoading}>
+                  {isRetrievalLoading ? "Searching..." : "Search memory"}
+                </Button>
+              </div>
+              {retrievalResults ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-white/85 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Journal entries</p>
+                    <div className="mt-2 space-y-2">
+                      {retrievalResults.entries.length > 0 ? retrievalResults.entries.map((item) => (
+                        <div key={item.id} className="rounded-xl border border-[var(--ink-300)] bg-white p-3">
+                          <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
+                          <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mood} · {formatDate(item.created_at)}</p>
+                          <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
+                        </div>
+                      )) : <p className="text-sm text-[var(--ink-600)]">No matching entries yet.</p>}
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-white/85 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Reflections & compositions</p>
+                    <div className="mt-2 space-y-2">
+                      {retrievalResults.compositions.length > 0 ? retrievalResults.compositions.map((item) => (
+                        <div key={item.id} className="rounded-xl border border-[var(--ink-300)] bg-white p-3">
+                          <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
+                          <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mode} · {item.mood} · {formatDate(item.created_at)}</p>
+                          <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
+                        </div>
+                      )) : <p className="text-sm text-[var(--ink-600)]">No matching reflections yet.</p>}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {memorySnapshot?.reflectionMoments?.length ? (

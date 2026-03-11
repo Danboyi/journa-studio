@@ -150,6 +150,30 @@ export function JournaShell() {
     recentEntryCount: number;
   } | null>(null);
 
+  const [retrievalQuery, setRetrievalQuery] = useState("");
+  const [retrievalResults, setRetrievalResults] = useState<{
+    entries: Array<{
+      id: string;
+      kind: "entry";
+      title: string;
+      mood: string;
+      created_at: string;
+      score: number;
+      snippet: string;
+    }>;
+    compositions: Array<{
+      id: string;
+      kind: "composition";
+      title: string;
+      mood: string;
+      mode?: string;
+      created_at: string;
+      score: number;
+      snippet: string;
+    }>;
+  } | null>(null);
+  const [isRetrievalLoading, setIsRetrievalLoading] = useState(false);
+
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
     mood: "serious",
@@ -429,6 +453,8 @@ export function JournaShell() {
     setShares([]);
     setCollections([]);
     setMemorySnapshot(null);
+    setRetrievalResults(null);
+    setRetrievalQuery("");
     setResult(null);
   }
 
@@ -470,6 +496,54 @@ export function JournaShell() {
       await loadMemorySnapshot();
     } finally {
       setIsSavingEntry(false);
+    }
+  }
+
+  async function handleRetrieve() {
+    if (!retrievalQuery.trim()) {
+      setError("Enter something you want Journa to look for.");
+      return;
+    }
+
+    setIsRetrievalLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/copilot/retrieve?q=${encodeURIComponent(retrievalQuery.trim())}`);
+      const payload = (await res.json()) as {
+        error?: string;
+        entries?: Array<{
+          id: string;
+          kind: "entry";
+          title: string;
+          mood: string;
+          created_at: string;
+          score: number;
+          snippet: string;
+        }>;
+        compositions?: Array<{
+          id: string;
+          kind: "composition";
+          title: string;
+          mood: string;
+          mode?: string;
+          created_at: string;
+          score: number;
+          snippet: string;
+        }>;
+      };
+
+      if (!res.ok) {
+        setError(payload.error ?? "Could not retrieve memories.");
+        return;
+      }
+
+      setRetrievalResults({
+        entries: payload.entries ?? [],
+        compositions: payload.compositions ?? [],
+      });
+    } finally {
+      setIsRetrievalLoading(false);
     }
   }
 
@@ -918,7 +992,11 @@ export function JournaShell() {
           activeRevokeShareId={activeRevokeShareId}
           shareStatus={shareStatus}
           memorySnapshot={memorySnapshot}
+          retrievalQuery={retrievalQuery}
+          retrievalResults={retrievalResults}
+          isRetrievalLoading={isRetrievalLoading}
           setComposeInput={(updater) => setComposeInput(updater)}
+          setRetrievalQuery={setRetrievalQuery}
           setSelectedCollectionId={setSelectedCollectionId}
           setCollectionTitle={setCollectionTitle}
           setCollectionDescription={setCollectionDescription}
@@ -934,6 +1012,7 @@ export function JournaShell() {
           onExportComposition={exportComposition}
           onRevokeShare={revokeShare}
           onOpenHistoryItem={openHistoryItem}
+          onRetrieve={handleRetrieve}
           findLatestShareForComposition={findLatestShareForComposition}
           formatDate={formatDate}
         />
