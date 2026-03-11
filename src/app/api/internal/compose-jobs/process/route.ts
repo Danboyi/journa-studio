@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
             excerpt: output.excerpt,
             draft: output.draft,
             editorial_notes: output.editorialNotes,
+            reflection: output.reflection ?? {},
           })
           .select("id")
           .single();

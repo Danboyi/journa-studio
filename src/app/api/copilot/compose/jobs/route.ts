@@ -58,13 +58,13 @@ export async function GET(request: NextRequest) {
 
     let compositionsById: Record<
       string,
-      { id: string; title: string; excerpt: string; mode: string; mood: string; created_at: string }
+      { id: string; title: string; excerpt: string; mode: string; mood: string; reflection: unknown; created_at: string }
     > = {};
 
     if (compositionIds.length > 0) {
       const { data: compositions } = await supabase
         .from("compositions")
-        .select("id, title, excerpt, mode, mood, created_at")
+        .select("id, title, excerpt, mode, mood, reflection, created_at")
         .in("id", compositionIds)
         .eq("user_id", user.id);
 

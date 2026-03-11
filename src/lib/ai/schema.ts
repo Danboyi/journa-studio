@@ -39,11 +39,19 @@ export const composeRequestSchema = z.object({
   persist: z.boolean().optional().default(true),
 });
 
+export const reflectionPayloadSchema = z.object({
+  summary: z.string().min(10),
+  whatMattered: z.string().min(10),
+  beneathTheSurface: z.string().min(10),
+  followUpQuestion: z.string().min(10),
+});
+
 export const composeResponseSchema = z.object({
   title: z.string().min(2),
   excerpt: z.string().min(10),
   draft: z.string().min(50),
   editorialNotes: z.array(z.string().min(3)).min(1),
+  reflection: reflectionPayloadSchema.optional(),
 });
 
 export const composeResponseJsonSchema = {
@@ -72,6 +80,17 @@ export const composeResponseJsonSchema = {
       items: {
         type: "string",
         minLength: 3,
+      },
+    },
+    reflection: {
+      type: "object",
+      additionalProperties: false,
+      required: ["summary", "whatMattered", "beneathTheSurface", "followUpQuestion"],
+      properties: {
+        summary: { type: "string", minLength: 10, maxLength: 240 },
+        whatMattered: { type: "string", minLength: 10, maxLength: 240 },
+        beneathTheSurface: { type: "string", minLength: 10, maxLength: 240 },
+        followUpQuestion: { type: "string", minLength: 10, maxLength: 240 },
       },
     },
   },

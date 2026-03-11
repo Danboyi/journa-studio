@@ -39,11 +39,19 @@ export interface ComposeRequest {
   persist?: boolean;
 }
 
+export interface ReflectionPayload {
+  summary: string;
+  whatMattered: string;
+  beneathTheSurface: string;
+  followUpQuestion: string;
+}
+
 export interface ComposeResponse {
   title: string;
   excerpt: string;
   draft: string;
   editorialNotes: string[];
+  reflection?: ReflectionPayload;
 }
 
 export interface JournalEntry {
@@ -67,6 +75,7 @@ export interface CompositionHistoryItem {
   excerpt: string;
   draft: string;
   editorial_notes: string[];
+  reflection: ReflectionPayload | null;
   created_at: string;
   updated_at: string;
 }

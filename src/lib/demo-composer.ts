@@ -46,6 +46,14 @@ export function composeDraft(input: ComposeRequest): ComposeResponse {
           "Strengthened structure and readability without flattening voice.",
           "Adjusted pacing and phrasing to fit the requested output mode.",
         ],
+    reflection: isReflectionMode
+      ? {
+          summary: "This note captures a real moment that felt important before it was fully understood.",
+          whatMattered: "The entry is trying to preserve meaning, not just facts, so future-you can revisit it with clarity.",
+          beneathTheSurface: `Under the surface, the emotional signal leans ${input.mood} with more nuance than a single label can hold.`,
+          followUpQuestion: "If you returned to this tomorrow, what part of it would still feel unfinished or unresolved?",
+        }
+      : undefined,
   };
 }
 

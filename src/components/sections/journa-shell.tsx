@@ -701,6 +701,7 @@ export function JournaShell() {
       excerpt: item.excerpt,
       draft: item.draft,
       editorialNotes: item.editorial_notes,
+      reflection: item.reflection ?? undefined,
     });
 
     setMode("copilot");
@@ -721,6 +722,7 @@ export function JournaShell() {
         excerpt: string;
         draft: string;
         editorial_notes: string[];
+        reflection?: ComposeResponse["reflection"];
       } | null;
     };
 
@@ -734,6 +736,7 @@ export function JournaShell() {
       excerpt: payload.composition.excerpt,
       draft: payload.composition.draft,
       editorialNotes: payload.composition.editorial_notes,
+      reflection: payload.composition.reflection,
     });
 
     setComposeStatus("Loaded from async job history.");
@@ -871,6 +874,26 @@ export function JournaShell() {
         <Card className="mt-8 p-5 sm:p-6">
           <h2 className="text-2xl font-semibold text-[var(--ink-950)]">{result.title}</h2>
           <p className="mt-2 text-sm text-[var(--ink-700)]">{result.excerpt}</p>
+          {result.reflection ? (
+            <div className="mt-4 grid gap-3 rounded-2xl bg-[var(--sand-50)] p-4 text-sm text-[var(--ink-800)] sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What happened</p>
+                <p className="mt-1">{result.reflection.summary}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">What mattered</p>
+                <p className="mt-1">{result.reflection.whatMattered}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Beneath the surface</p>
+                <p className="mt-1">{result.reflection.beneathTheSurface}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Follow-up question</p>
+                <p className="mt-1">{result.reflection.followUpQuestion}</p>
+              </div>
+            </div>
+          ) : null}
           <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--sand-50)] p-4 text-sm leading-relaxed text-[var(--ink-900)]">
             {result.draft}
           </pre>

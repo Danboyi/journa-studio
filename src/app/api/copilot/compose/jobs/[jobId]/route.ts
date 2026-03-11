@@ -64,6 +64,7 @@ export async function GET(
       excerpt: string;
       draft: string;
       editorial_notes: string[];
+      reflection: unknown;
       mode: string;
       mood: string;
       created_at: string;
@@ -73,7 +74,7 @@ export async function GET(
       const { data } = await supabase
         .from("compositions")
         .select(
-          "id, source_text, voice_notes, style_preset, title, excerpt, draft, editorial_notes, mode, mood, created_at",
+          "id, source_text, voice_notes, style_preset, title, excerpt, draft, editorial_notes, reflection, mode, mood, created_at",
         )
         .eq("id", job.composition_id)
         .eq("user_id", user.id)
