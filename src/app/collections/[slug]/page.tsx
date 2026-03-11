@@ -39,6 +39,10 @@ export default async function PublicCollectionPage({
               {item.composition?.title}
             </h2>
             <p className="mt-2 text-sm text-[var(--ink-700)]">{item.composition?.excerpt}</p>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--ink-600)]">
+              {item.composition?.mode ? <span className="rounded-full bg-[var(--sand-50)] px-3 py-1">{item.composition.mode}</span> : null}
+              {item.composition?.mood ? <span className="rounded-full bg-[var(--sand-50)] px-3 py-1">{item.composition.mood}</span> : null}
+            </div>
             <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--sand-50)] p-4 text-sm leading-relaxed text-[var(--ink-900)]">
               {item.composition?.draft}
             </pre>

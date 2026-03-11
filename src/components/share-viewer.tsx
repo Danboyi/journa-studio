@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 
 type SharePayload = {
+  expires_at?: string | null;
+  view_count?: number;
+  last_viewed_at?: string | null;
   composition: {
     title: string;
     excerpt: string;
     draft: string;
+    mood?: string;
+    mode?: string;
+    created_at?: string;
   };
 };
 
@@ -89,12 +95,20 @@ export function ShareViewer({ token }: { token: string }) {
         </section>
       ) : (
         <article className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-sm backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.14em] text-[var(--ink-500)]">Shared via My Journa</p>
+          <p className="text-xs uppercase tracking-[0.14em] text-[var(--ink-500)]">Shared via Journa</p>
           <h1 className="mt-3 text-4xl font-semibold text-[var(--ink-950)]">{share.composition.title}</h1>
           <p className="mt-3 text-sm text-[var(--ink-700)]">{share.composition.excerpt}</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--ink-600)]">
+            {share.composition.mode ? <span className="rounded-full bg-[var(--sand-50)] px-3 py-1">{share.composition.mode}</span> : null}
+            {share.composition.mood ? <span className="rounded-full bg-[var(--sand-50)] px-3 py-1">{share.composition.mood}</span> : null}
+            {typeof share.view_count === "number" ? <span className="rounded-full bg-[var(--sand-50)] px-3 py-1">{share.view_count} views</span> : null}
+          </div>
           <pre className="mt-6 whitespace-pre-wrap rounded-2xl bg-[var(--sand-50)] p-4 text-sm leading-relaxed text-[var(--ink-900)]">
             {share.composition.draft}
           </pre>
+          <p className="mt-5 text-xs text-[var(--ink-500)]">
+            This piece was intentionally shared from a private Journa workspace.
+          </p>
         </article>
       )}
     </main>
