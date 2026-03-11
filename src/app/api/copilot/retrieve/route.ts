@@ -34,7 +34,37 @@ function makeSnippet(input: string, token: string) {
 
 function scoreText(input: string, tokens: string[]) {
   const lower = input.toLowerCase();
-  return tokens.reduce((score, token) => score + (lower.includes(token) ? 1 : 0), 0);
+  let score = 0;
+
+  for (const token of tokens) {
+    if (!lower.includes(token)) {
+      continue;
+    }
+
+    score += 2;
+    const exactMatches = lower.split(token).length - 1;
+    score += Math.min(exactMatches, 3);
+  }
+
+  if (tokens.length > 1 && tokens.every((token) => lower.includes(token))) {
+    score += 4;
+  }
+
+  return score;
+}
+
+function buildWhyRelated(tokens: string[], input: string, mood?: string | null) {
+  const lower = input.toLowerCase();
+  const matchedTokens = tokens.filter((token) => lower.includes(token)).slice(0, 3);
+
+  if (matchedTokens.length === 0) {
+    return mood ? `Related mostly by mood: ${mood}.` : "Related by overall language overlap.";
+  }
+
+  const tokenText = matchedTokens.join(", ");
+  return mood
+    ? `Related because it echoes ${tokenText} and carries a ${mood} tone.`
+    : `Related because it echoes ${tokenText}.`;
 }
 
 export async function GET(request: NextRequest) {
@@ -112,6 +142,7 @@ export async function GET(request: NextRequest) {
               created_at: entry.created_at,
               score,
               snippet: makeSnippet(entry.body, tokens[0]),
+              whyRelated: buildWhyRelated(tokens, haystack, entry.mood),
             }
           : null;
       })
@@ -134,6 +165,7 @@ export async function GET(request: NextRequest) {
               created_at: item.created_at,
               score,
               snippet: makeSnippet(`${item.excerpt} ${item.draft}`, tokens[0]),
+              whyRelated: buildWhyRelated(tokens, haystack, item.mood),
             }
           : null;
       })

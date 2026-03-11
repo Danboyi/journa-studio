@@ -67,6 +67,7 @@ type RetrievalResult = {
   created_at: string;
   score: number;
   snippet: string;
+  whyRelated: string;
 };
 
 type CopilotPanelProps = {
@@ -406,6 +407,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
                           <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
                           <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mood} · {formatDate(item.created_at)}</p>
                           <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
+                          <p className="mt-2 text-xs text-[var(--ink-500)]">{item.whyRelated}</p>
                         </div>
                       )) : <p className="text-sm text-[var(--ink-600)]">No matching entries yet.</p>}
                     </div>
@@ -418,6 +420,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
                           <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
                           <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mode} · {item.mood} · {formatDate(item.created_at)}</p>
                           <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
+                          <p className="mt-2 text-xs text-[var(--ink-500)]">{item.whyRelated}</p>
                         </div>
                       )) : <p className="text-sm text-[var(--ink-600)]">No matching reflections yet.</p>}
                     </div>
