@@ -173,6 +173,27 @@ export function JournaShell() {
     }>;
   } | null>(null);
   const [isRetrievalLoading, setIsRetrievalLoading] = useState(false);
+  const [relatedMemories, setRelatedMemories] = useState<{
+    entries: Array<{
+      id: string;
+      kind: "entry";
+      title: string;
+      mood: string;
+      created_at: string;
+      score: number;
+      snippet: string;
+    }>;
+    compositions: Array<{
+      id: string;
+      kind: "composition";
+      title: string;
+      mood: string;
+      mode?: string;
+      created_at: string;
+      score: number;
+      snippet: string;
+    }>;
+  } | null>(null);
 
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
@@ -454,6 +475,7 @@ export function JournaShell() {
     setCollections([]);
     setMemorySnapshot(null);
     setRetrievalResults(null);
+    setRelatedMemories(null);
     setRetrievalQuery("");
     setResult(null);
   }
@@ -499,6 +521,41 @@ export function JournaShell() {
     }
   }
 
+  async function retrieveMemories(query: string) {
+    const res = await fetch(`/api/copilot/retrieve?q=${encodeURIComponent(query.trim())}`);
+    const payload = (await res.json()) as {
+      error?: string;
+      entries?: Array<{
+        id: string;
+        kind: "entry";
+        title: string;
+        mood: string;
+        created_at: string;
+        score: number;
+        snippet: string;
+      }>;
+      compositions?: Array<{
+        id: string;
+        kind: "composition";
+        title: string;
+        mood: string;
+        mode?: string;
+        created_at: string;
+        score: number;
+        snippet: string;
+      }>;
+    };
+
+    if (!res.ok) {
+      throw new Error(payload.error ?? "Could not retrieve memories.");
+    }
+
+    return {
+      entries: payload.entries ?? [],
+      compositions: payload.compositions ?? [],
+    };
+  }
+
   async function handleRetrieve() {
     if (!retrievalQuery.trim()) {
       setError("Enter something you want Journa to look for.");
@@ -509,39 +566,10 @@ export function JournaShell() {
     setError(null);
 
     try {
-      const res = await fetch(`/api/copilot/retrieve?q=${encodeURIComponent(retrievalQuery.trim())}`);
-      const payload = (await res.json()) as {
-        error?: string;
-        entries?: Array<{
-          id: string;
-          kind: "entry";
-          title: string;
-          mood: string;
-          created_at: string;
-          score: number;
-          snippet: string;
-        }>;
-        compositions?: Array<{
-          id: string;
-          kind: "composition";
-          title: string;
-          mood: string;
-          mode?: string;
-          created_at: string;
-          score: number;
-          snippet: string;
-        }>;
-      };
-
-      if (!res.ok) {
-        setError(payload.error ?? "Could not retrieve memories.");
-        return;
-      }
-
-      setRetrievalResults({
-        entries: payload.entries ?? [],
-        compositions: payload.compositions ?? [],
-      });
+      const data = await retrieveMemories(retrievalQuery);
+      setRetrievalResults(data);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not retrieve memories.");
     } finally {
       setIsRetrievalLoading(false);
     }
@@ -567,7 +595,18 @@ export function JournaShell() {
           return;
         }
 
-        setResult(data as ComposeResponse);
+        const response = data as ComposeResponse;
+        setResult(response);
+        if (response.reflection && composeInput.sourceText.trim()) {
+          try {
+            const related = await retrieveMemories(composeInput.sourceText);
+            setRelatedMemories(related);
+          } catch {
+            setRelatedMemories(null);
+          }
+        } else {
+          setRelatedMemories(null);
+        }
         return;
       }
 
@@ -642,12 +681,23 @@ export function JournaShell() {
         }
 
         if (statusPayload.job.status === "completed" && statusPayload.composition) {
-          setResult({
+          const nextResult = {
             title: statusPayload.composition.title,
             excerpt: statusPayload.composition.excerpt,
             draft: statusPayload.composition.draft,
             editorialNotes: statusPayload.composition.editorial_notes,
-          });
+          };
+          setResult(nextResult);
+          if (composeInput.mode === "essay" || composeInput.mode === "daily-journal") {
+            try {
+              const related = await retrieveMemories(composeInput.sourceText);
+              setRelatedMemories(related);
+            } catch {
+              setRelatedMemories(null);
+            }
+          } else {
+            setRelatedMemories(null);
+          }
           setComposeStatus("Draft ready.");
           completed = true;
           break;
@@ -834,7 +884,7 @@ export function JournaShell() {
     }
   }
 
-  function openHistoryItem(item: CompositionHistoryItem) {
+  async function openHistoryItem(item: CompositionHistoryItem) {
     setComposeInput({
       mode: item.mode,
       mood: item.mood,
@@ -851,6 +901,17 @@ export function JournaShell() {
       editorialNotes: item.editorial_notes,
       reflection: item.reflection ?? undefined,
     });
+
+    if (item.reflection && item.source_text.trim()) {
+      try {
+        const related = await retrieveMemories(item.source_text);
+        setRelatedMemories(related);
+      } catch {
+        setRelatedMemories(null);
+      }
+    } else {
+      setRelatedMemories(null);
+    }
 
     setMode("copilot");
   }
@@ -886,6 +947,17 @@ export function JournaShell() {
       editorialNotes: payload.composition.editorial_notes,
       reflection: payload.composition.reflection,
     });
+
+    if (payload.composition.reflection && composeInput.sourceText.trim()) {
+      try {
+        const related = await retrieveMemories(composeInput.sourceText);
+        setRelatedMemories(related);
+      } catch {
+        setRelatedMemories(null);
+      }
+    } else {
+      setRelatedMemories(null);
+    }
 
     setComposeStatus("Loaded from async job history.");
     await Promise.all([loadHistory(), loadMemorySnapshot()]);
@@ -1075,6 +1147,40 @@ export function JournaShell() {
               ))}
             </ul>
           </div>
+          {result.reflection && relatedMemories ? (
+            <div className="mt-4 rounded-2xl border border-[var(--ink-300)] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Related memories</p>
+              <p className="mt-2 text-sm text-[var(--ink-700)]">
+                Journa found nearby writing from your history that seems emotionally or thematically related.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Journal entries</p>
+                  <div className="mt-2 space-y-2">
+                    {relatedMemories.entries.length > 0 ? relatedMemories.entries.slice(0, 3).map((item) => (
+                      <div key={item.id} className="rounded-xl bg-[var(--sand-50)] p-3">
+                        <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
+                        <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mood} · {formatDate(item.created_at)}</p>
+                        <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
+                      </div>
+                    )) : <p className="text-sm text-[var(--ink-600)]">No nearby entries surfaced yet.</p>}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Reflections & compositions</p>
+                  <div className="mt-2 space-y-2">
+                    {relatedMemories.compositions.length > 0 ? relatedMemories.compositions.slice(0, 3).map((item) => (
+                      <div key={item.id} className="rounded-xl bg-[var(--sand-50)] p-3">
+                        <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
+                        <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mode} · {item.mood} · {formatDate(item.created_at)}</p>
+                        <p className="mt-2 text-sm text-[var(--ink-700)]">{item.snippet}</p>
+                      </div>
+                    )) : <p className="text-sm text-[var(--ink-600)]">No nearby reflections surfaced yet.</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </Card>
       ) : null}
     </div>
