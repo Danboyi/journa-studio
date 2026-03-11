@@ -23,7 +23,7 @@
 
 ## Next
 
-- [ ] Add stronger recurrence summaries (“you’ve returned to this before”)
+- [x] Add stronger recurrence summaries (“you’ve returned to this before”)
 - [ ] Add one-click open actions for related memories
 - [ ] Improve mobile UX for journaling, reflection, and retrieval
 - [ ] Turn weekly/monthly recaps into guided reflection rituals

@@ -105,6 +105,36 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function buildRecurrenceSummary(relatedMemories: {
+  entries: Array<{ mood: string; whyRelated: string }>;
+  compositions: Array<{ mood: string; whyRelated: string }>;
+}) {
+  const combined = [...relatedMemories.entries, ...relatedMemories.compositions];
+
+  if (combined.length === 0) {
+    return null;
+  }
+
+  const moodCounts = new Map<string, number>();
+  for (const item of combined) {
+    moodCounts.set(item.mood, (moodCounts.get(item.mood) ?? 0) + 1);
+  }
+
+  const topMood = [...moodCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const strongestReason = combined[0]?.whyRelated ?? "";
+  const totalMatches = combined.length;
+
+  if (totalMatches >= 4 && topMood) {
+    return `You’ve returned to something like this several times. Journa found ${totalMatches} nearby memories, with ${topMood} showing up most often.`;
+  }
+
+  if (totalMatches >= 2 && topMood) {
+    return `This does not look isolated. Journa found ${totalMatches} related memories, and the strongest repeating tone is ${topMood}.`;
+  }
+
+  return strongestReason ? `There is at least one earlier memory that echoes this note. ${strongestReason}` : null;
+}
+
 export function JournaShell() {
   const [mode, setMode] = useState<"journal" | "copilot">("journal");
   const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
@@ -970,6 +1000,10 @@ export function JournaShell() {
   }
 
   const isAuthenticated = Boolean(authUser);
+  const recurrenceSummary = useMemo(
+    () => (result?.reflection && relatedMemories ? buildRecurrenceSummary(relatedMemories) : null),
+    [result, relatedMemories],
+  );
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
@@ -1153,6 +1187,12 @@ export function JournaShell() {
               ))}
             </ul>
           </div>
+          {result.reflection && recurrenceSummary ? (
+            <div className="mt-4 rounded-2xl border border-[var(--ink-300)] bg-[var(--sand-50)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring pattern</p>
+              <p className="mt-2 text-sm text-[var(--ink-900)]">{recurrenceSummary}</p>
+            </div>
+          ) : null}
           {result.reflection && relatedMemories ? (
             <div className="mt-4 rounded-2xl border border-[var(--ink-300)] bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Related memories</p>
