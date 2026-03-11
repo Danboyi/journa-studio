@@ -19,7 +19,7 @@ export function JournaHero({ isAuthenticated, userEmail, onSignOut }: JournaHero
       </h1>
       <p className="mt-4 max-w-2xl text-base text-[var(--ink-700)] sm:text-lg">
         Journa turns everyday thoughts into a private memory system. Capture your day in natural language,
-        get thoughtful AI reflection, and transform raw notes into polished writing without losing your voice.
+        get thoughtful AI reflection, notice recurring patterns, and transform raw notes into polished writing without losing your voice.
       </p>
       <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-[var(--ink-700)] sm:text-sm">
         <span className="rounded-full bg-white/70 px-3 py-1">Private by default</span>

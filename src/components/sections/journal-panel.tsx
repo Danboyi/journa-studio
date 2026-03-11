@@ -48,7 +48,7 @@ export function JournalPanel({
           <div>
             <h2 className="text-xl font-semibold text-[var(--ink-900)]">Daily Capture</h2>
             <p className="mt-1 text-sm text-[var(--ink-700)]">
-              Start with one honest note. Journa can help you reflect on it after.
+              Start with one honest note. Journa can help you reflect on it, then remember the patterns over time.
             </p>
           </div>
           <Badge>{mood}</Badge>

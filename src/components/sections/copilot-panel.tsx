@@ -24,6 +24,26 @@ type CopilotTemplate = {
   mood: NarrativeMood;
 };
 
+type MemorySnapshot = {
+  recurringMoods: Array<{ mood: string; count: number }>;
+  recurringThemes: Array<{ theme: string; count: number }>;
+  reflectionMoments: Array<{
+    id: string;
+    title: string;
+    excerpt: string;
+    mode: string;
+    mood: string;
+    created_at: string;
+    reflection: {
+      summary: string;
+      whatMattered: string;
+      beneathTheSurface: string;
+      followUpQuestion: string;
+    };
+  }>;
+  recentEntryCount: number;
+};
+
 type CopilotPanelProps = {
   isAuthenticated: boolean;
   lifePrompts: string[];
@@ -54,6 +74,7 @@ type CopilotPanelProps = {
   activeExportId: string | null;
   activeRevokeShareId: string | null;
   shareStatus: string | null;
+  memorySnapshot: MemorySnapshot | null;
   setComposeInput: (updater: (prev: ComposeRequest) => ComposeRequest) => void;
   setSelectedCollectionId: (value: string) => void;
   setCollectionTitle: (value: string) => void;
@@ -104,6 +125,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
     activeExportId,
     activeRevokeShareId,
     shareStatus,
+    memorySnapshot,
     setComposeInput,
     setSelectedCollectionId,
     setCollectionTitle,
@@ -246,6 +268,30 @@ export function CopilotPanel(props: CopilotPanelProps) {
               <p className="mt-2 text-sm text-[var(--ink-700)]">
                 Your saved compositions live here. Open past work, export it, or organize it when you need to.
               </p>
+              {memorySnapshot ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-white/85 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring moods</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {memorySnapshot.recurringMoods.length > 0 ? memorySnapshot.recurringMoods.map((item) => (
+                        <span key={item.mood} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
+                          {item.mood} × {item.count}
+                        </span>
+                      )) : <span className="text-xs text-[var(--ink-600)]">Not enough history yet.</span>}
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-white/85 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">Recurring themes</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {memorySnapshot.recurringThemes.length > 0 ? memorySnapshot.recurringThemes.map((item) => (
+                        <span key={item.theme} className="rounded-full bg-[var(--sand-50)] px-3 py-1 text-xs text-[var(--ink-800)]">
+                          {item.theme} × {item.count}
+                        </span>
+                      )) : <span className="text-xs text-[var(--ink-600)]">Themes will appear as you write more.</span>}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-3 space-y-2">
                 {isHistoryLoading ? <p className="text-sm text-[var(--ink-700)]">Loading history...</p> : null}
                 {!isHistoryLoading && compositions.length === 0 ? <p className="text-sm text-[var(--ink-700)]">No saved compositions yet.</p> : null}
@@ -266,6 +312,21 @@ export function CopilotPanel(props: CopilotPanelProps) {
                 ))}
               </div>
             </div>
+
+            {memorySnapshot?.reflectionMoments?.length ? (
+              <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Recent reflection signals</p>
+                <div className="mt-3 space-y-3">
+                  {memorySnapshot.reflectionMoments.map((item) => (
+                    <div key={item.id} className="rounded-xl bg-white/85 p-3">
+                      <p className="text-sm font-semibold text-[var(--ink-900)]">{item.title}</p>
+                      <p className="mt-1 text-xs text-[var(--ink-600)]">{item.mode} · {item.mood} · {formatDate(item.created_at)}</p>
+                      <p className="mt-2 text-sm text-[var(--ink-700)]">{item.reflection.whatMattered}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <details className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
               <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">

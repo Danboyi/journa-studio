@@ -121,6 +121,20 @@ export function JournaShell() {
   const [composeJobs, setComposeJobs] = useState<ComposeJobItem[]>([]);
   const [shares, setShares] = useState<CompositionShareItem[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [memorySnapshot, setMemorySnapshot] = useState<{
+    recurringMoods: Array<{ mood: string; count: number }>;
+    recurringThemes: Array<{ theme: string; count: number }>;
+    reflectionMoments: Array<{
+      id: string;
+      title: string;
+      excerpt: string;
+      mode: string;
+      mood: string;
+      created_at: string;
+      reflection: NonNullable<ComposeResponse["reflection"]>;
+    }>;
+    recentEntryCount: number;
+  } | null>(null);
 
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
@@ -265,6 +279,36 @@ export function JournaShell() {
     }
   }, [selectedCollectionId]);
 
+  const loadMemorySnapshot = useCallback(async () => {
+    try {
+      const res = await fetch("/api/copilot/memory");
+      const payload = (await res.json()) as {
+        recurringMoods: Array<{ mood: string; count: number }>;
+        recurringThemes: Array<{ theme: string; count: number }>;
+        reflectionMoments: Array<{
+          id: string;
+          title: string;
+          excerpt: string;
+          mode: string;
+          mood: string;
+          created_at: string;
+          reflection: NonNullable<ComposeResponse["reflection"]>;
+        }>;
+        recentEntryCount: number;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        setError(payload.error ?? "Could not load memory view.");
+        return;
+      }
+
+      setMemorySnapshot(payload);
+    } catch {
+      setError("Could not load memory view.");
+    }
+  }, []);
+
   useEffect(() => {
     const bootstrap = async () => {
       setIsAuthLoading(true);
@@ -279,14 +323,14 @@ export function JournaShell() {
         }
 
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections()]);
+        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections(), loadMemorySnapshot()]);
       } finally {
         setIsAuthLoading(false);
       }
     };
 
     void bootstrap();
-  }, [loadEntries, loadHistory, loadComposeJobs, loadShares, loadCollections]);
+  }, [loadEntries, loadHistory, loadComposeJobs, loadShares, loadCollections, loadMemorySnapshot]);
 
   async function handleAuthSubmit() {
     setIsAuthLoading(true);
@@ -326,7 +370,7 @@ export function JournaShell() {
 
       if (payload.user) {
         setAuthUser(payload.user);
-        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections()]);
+        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections(), loadMemorySnapshot()]);
         setAuthPassword("");
         setAuthFullName("");
         return;
@@ -356,6 +400,7 @@ export function JournaShell() {
     setComposeJobs([]);
     setShares([]);
     setCollections([]);
+    setMemorySnapshot(null);
     setResult(null);
   }
 
@@ -394,6 +439,7 @@ export function JournaShell() {
 
       setEntries((prev) => [payload.entry!, ...prev]);
       setJournalText("");
+      await loadMemorySnapshot();
     } finally {
       setIsSavingEntry(false);
     }
@@ -511,7 +557,7 @@ export function JournaShell() {
       }
 
       if (composeInput.persist !== false) {
-        await Promise.all([loadHistory(), loadComposeJobs()]);
+        await Promise.all([loadHistory(), loadComposeJobs(), loadMemorySnapshot()]);
       }
     } finally {
       setIsComposeLoading(false);
@@ -740,7 +786,7 @@ export function JournaShell() {
     });
 
     setComposeStatus("Loaded from async job history.");
-    await loadHistory();
+    await Promise.all([loadHistory(), loadMemorySnapshot()]);
   }
 
   const isAuthenticated = Boolean(authUser);
@@ -843,6 +889,7 @@ export function JournaShell() {
           activeExportId={activeExportId}
           activeRevokeShareId={activeRevokeShareId}
           shareStatus={shareStatus}
+          memorySnapshot={memorySnapshot}
           setComposeInput={(updater) => setComposeInput(updater)}
           setSelectedCollectionId={setSelectedCollectionId}
           setCollectionTitle={setCollectionTitle}
@@ -894,7 +941,10 @@ export function JournaShell() {
               </div>
             </div>
           ) : null}
-          <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--sand-50)] p-4 text-sm leading-relaxed text-[var(--ink-900)]">
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">
+            {result.reflection ? "Polished reflection" : "Draft"}
+          </p>
+          <pre className="mt-2 whitespace-pre-wrap rounded-2xl bg-[var(--sand-50)] p-4 text-sm leading-relaxed text-[var(--ink-900)]">
             {result.draft}
           </pre>
           <ul className="mt-4 space-y-2 text-sm text-[var(--ink-700)]">
