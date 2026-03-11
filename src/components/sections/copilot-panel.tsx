@@ -192,8 +192,8 @@ export function CopilotPanel(props: CopilotPanelProps) {
 
   return (
     <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-      <Card className="p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-[var(--ink-900)]">Copilot</h2>
             <p className="mt-1 text-sm text-[var(--ink-700)]">
@@ -215,7 +215,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
         </div>
 
         <label className="mt-4 block text-sm font-medium">Quick actions</label>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+        <div className="mt-2 grid gap-2 grid-cols-1 sm:grid-cols-3">
           {copilotTemplates.map((template) => (
             <button
               key={template.id}
@@ -400,14 +400,14 @@ export function CopilotPanel(props: CopilotPanelProps) {
               <p className="mt-2 text-sm text-[var(--ink-700)]">
                 Ask Journa about a feeling, topic, or recurring concern to surface relevant writing.
               </p>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <input
                   value={retrievalQuery}
                   onChange={(event) => setRetrievalQuery(event.target.value)}
-                  className="h-10 flex-1 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                  className="h-10 w-full flex-1 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
                   placeholder='Try: "loneliness", "ambition", "family", or "when did I feel hopeful?"'
                 />
-                <Button size="sm" variant="secondary" onClick={onRetrieve} disabled={isRetrievalLoading}>
+                <Button className="w-full sm:w-auto" size="sm" variant="secondary" onClick={onRetrieve} disabled={isRetrievalLoading}>
                   {isRetrievalLoading ? "Searching..." : "Search memory"}
                 </Button>
               </div>

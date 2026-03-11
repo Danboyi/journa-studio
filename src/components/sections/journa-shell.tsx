@@ -1070,11 +1070,11 @@ export function JournaShell() {
         <JournaHero isAuthenticated={isAuthenticated} userEmail={authUser?.email} onSignOut={handleSignOut} />
       </motion.div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button variant={mode === "journal" ? "default" : "secondary"} onClick={() => setMode("journal")}>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <Button className="w-full sm:w-auto" variant={mode === "journal" ? "default" : "secondary"} onClick={() => setMode("journal")}>
           <BookOpenText className="mr-2 h-4 w-4" /> Journal Mode
         </Button>
-        <Button variant={mode === "copilot" ? "default" : "secondary"} onClick={() => setMode("copilot")}>
+        <Button className="w-full sm:w-auto" variant={mode === "copilot" ? "default" : "secondary"} onClick={() => setMode("copilot")}>
           <WandSparkles className="mr-2 h-4 w-4" /> Copilot Mode
         </Button>
       </div>
@@ -1197,7 +1197,7 @@ export function JournaShell() {
       ) : null}
 
       {result ? (
-        <Card className="mt-8 p-5 sm:p-6">
+        <Card className="mt-8 p-4 sm:p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">

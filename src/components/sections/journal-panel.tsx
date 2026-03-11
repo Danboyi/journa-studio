@@ -43,8 +43,8 @@ export function JournalPanel({
 }: JournalPanelProps) {
   return (
     <section className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-      <Card className="p-5 sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <Card className="p-4 sm:p-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-[var(--ink-900)]">Daily Capture</h2>
             <p className="mt-1 text-sm text-[var(--ink-700)]">
@@ -80,17 +80,17 @@ export function JournalPanel({
             <li>3. Send it into Copilot for reflection or a polished rewrite.</li>
           </ol>
         </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Button onClick={onSaveEntry} disabled={!isAuthenticated || isSavingEntry}>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Button className="w-full sm:w-auto" onClick={onSaveEntry} disabled={!isAuthenticated || isSavingEntry}>
             {isSavingEntry ? "Saving..." : "Save privately"}
           </Button>
-          <Button variant="secondary" onClick={onReflect}>
+          <Button className="w-full sm:w-auto" variant="secondary" onClick={onReflect}>
             <Sparkles className="mr-2 h-4 w-4" /> Reflect with Copilot
           </Button>
         </div>
       </Card>
 
-      <Card className="p-5 sm:p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-sm font-semibold tracking-[0.12em] text-[var(--ink-700)] uppercase">
           {isAuthenticated ? "Recent entries" : "Start here"}
         </h3>
