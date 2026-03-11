@@ -57,6 +57,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 OPENAI_API_KEY=
 SENTRY_DSN=
 OPENAI_MODEL=gpt-4.1-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_COOKIE_NAME=journa_session
 UPSTASH_REDIS_REST_URL=
@@ -87,6 +88,7 @@ Run SQL migration in your Supabase project:
 - `supabase/migrations/20260302233000_add_published_collections.sql`
 - `supabase/migrations/20260302235500_add_usage_events_guardrails.sql`
 - `supabase/migrations/20260303003000_add_compose_jobs_queue.sql`
+- `supabase/migrations/20260311061500_add_reflection_payload_to_compositions.sql`
 
 This creates:
 
