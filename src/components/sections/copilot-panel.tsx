@@ -239,36 +239,25 @@ export function CopilotPanel(props: CopilotPanelProps) {
 
         {isAuthenticated ? (
           <>
-            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Async compose jobs</p>
-                <Button size="sm" variant="secondary" onClick={onLoadComposeJobs} disabled={isComposeJobsLoading}>
-                  {isComposeJobsLoading ? "Refreshing..." : "Refresh"}
-                </Button>
-              </div>
-              <div className="mt-2 space-y-2">
-                {isComposeJobsLoading ? <p className="text-sm text-[var(--ink-700)]">Loading compose jobs...</p> : null}
-                {!isComposeJobsLoading && composeJobs.length === 0 ? (
-                  <p className="text-sm text-[var(--ink-700)]">No async jobs yet. Generate a draft to queue one.</p>
-                ) : null}
-                {composeJobs.slice(0, 6).map((job) => (
-                  <div key={job.id} className="rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
+            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Library</p>
+              <p className="mt-2 text-sm text-[var(--ink-700)]">
+                Your saved compositions live here. Open past work, export it, or organize it when you need to.
+              </p>
+              <div className="mt-3 space-y-2">
+                {isHistoryLoading ? <p className="text-sm text-[var(--ink-700)]">Loading history...</p> : null}
+                {!isHistoryLoading && compositions.length === 0 ? <p className="text-sm text-[var(--ink-700)]">No saved compositions yet.</p> : null}
+                {compositions.slice(0, 4).map((item) => (
+                  <div key={item.id} className="rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
                     <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
-                      {job.status} - attempt {job.attempt_count}/{job.max_attempts} - {formatDate(job.created_at)}
+                      {item.mode} - {item.mood} - {formatDate(item.created_at)}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-[var(--ink-900)]">
-                      {job.composition?.title ?? "Pending composition output"}
-                    </p>
-                    {job.last_error ? (
-                      <p className="mt-1 text-xs text-red-700">{job.last_error}</p>
-                    ) : (
-                      <p className="mt-1 text-xs text-[var(--ink-600)]">
-                        {job.composition?.excerpt ?? "Awaiting worker processing."}
-                      </p>
-                    )}
-                    <div className="mt-2 flex gap-2">
-                      <Button size="sm" variant="secondary" disabled={job.status !== "completed"} onClick={() => onOpenComposeJobItem(job)}>
-                        Open Result
+                    <p className="mt-1 font-semibold text-[var(--ink-900)]">{item.title}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-[var(--ink-700)]">{item.excerpt}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => onOpenHistoryItem(item)}>Open</Button>
+                      <Button size="sm" variant="secondary" disabled={activeExportId === item.id} onClick={() => onExportComposition(item.id, "markdown")}>
+                        {activeExportId === item.id ? "Exporting..." : "Export .md"}
                       </Button>
                     </div>
                   </div>
@@ -276,105 +265,120 @@ export function CopilotPanel(props: CopilotPanelProps) {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between">
-              <p className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-700)]">
-                <History className="mr-2 h-3.5 w-3.5" /> Composition history
+            <details className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+              <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">
+                Advanced workspace
+              </summary>
+              <p className="mt-2 text-sm text-[var(--ink-700)]">
+                Async jobs, sharing, and collections are still here — just moved out of the critical first-use path.
               </p>
-            </div>
-            <div className="mt-3 rounded-xl border border-[var(--ink-300)] bg-white/70 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Collections</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                <input value={collectionTitle} onChange={(event) => setCollectionTitle(event.target.value)} className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm" placeholder="New collection title" />
-                <input value={collectionDescription} onChange={(event) => setCollectionDescription(event.target.value)} className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm" placeholder="Optional description" />
-                <select value={selectedCollectionId} onChange={(event) => setSelectedCollectionId(event.target.value)} className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm">
-                  <option value="">Select collection</option>
-                  {collections.map((collection) => (
-                    <option key={collection.id} value={collection.id}>{collection.title}</option>
-                  ))}
-                </select>
-                <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm">
-                  <input type="checkbox" checked={collectionIsPublic} onChange={(event) => setCollectionIsPublic(event.target.checked)} />
-                  Public collection
-                </label>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary" onClick={onCreateCollection} disabled={activeCollectionId === "create"}>
-                  {activeCollectionId === "create" ? "Creating..." : "Create Collection"}
-                </Button>
-                {selectedCollectionId ? (
-                  <a
-                    className="inline-flex h-9 items-center rounded-full bg-[var(--sand-100)] px-4 text-xs font-semibold text-[var(--ink-800)]"
-                    href={`/collections/${collections.find((item) => item.id === selectedCollectionId)?.slug ?? ""}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open Collection
-                  </a>
-                ) : null}
-                {isCollectionsLoading ? <span className="inline-flex h-9 items-center text-xs text-[var(--ink-600)]">Syncing collections...</span> : null}
-              </div>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <input
-                type="number"
-                min={1}
-                max={365}
-                value={shareExpiryDays}
-                onChange={(event) => setShareExpiryDays(Number(event.target.value || 30))}
-                className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
-                placeholder="Share expiry in days"
-              />
-              <input
-                type="password"
-                value={sharePassword}
-                onChange={(event) => setSharePassword(event.target.value)}
-                className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
-                placeholder="Optional share password"
-              />
-            </div>
-            <div className="mt-3 space-y-2">
-              {isHistoryLoading ? <p className="text-sm text-[var(--ink-700)]">Loading history...</p> : null}
-              {isSharesLoading ? <p className="text-sm text-[var(--ink-700)]">Loading share analytics...</p> : null}
-              {!isHistoryLoading && compositions.length === 0 ? <p className="text-sm text-[var(--ink-700)]">No saved compositions yet.</p> : null}
-              {compositions.slice(0, 6).map((item) => {
-                const latestShare = findLatestShareForComposition(item.id);
-                return (
-                  <div key={item.id} className="rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
-                    <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
-                      {item.mode} - {item.mood} - {item.style_preset ?? "balanced"} - {formatDate(item.created_at)}
-                    </p>
-                    <p className="mt-1 font-semibold text-[var(--ink-900)]">{item.title}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-[var(--ink-700)]">{item.excerpt}</p>
-                    {latestShare ? (
-                      <p className="mt-1 text-xs text-[var(--ink-600)]">
-                        Views: {latestShare.view_count ?? 0} · Last view: {latestShare.last_viewed_at ? formatDate(latestShare.last_viewed_at) : "Never"} · {latestShare.password_protected ? "Password protected" : "Open link"}
+
+              <div className="mt-4 rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Async compose jobs</p>
+                  <Button size="sm" variant="secondary" onClick={onLoadComposeJobs} disabled={isComposeJobsLoading}>
+                    {isComposeJobsLoading ? "Refreshing..." : "Refresh"}
+                  </Button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {isComposeJobsLoading ? <p className="text-sm text-[var(--ink-700)]">Loading compose jobs...</p> : null}
+                  {!isComposeJobsLoading && composeJobs.length === 0 ? (
+                    <p className="text-sm text-[var(--ink-700)]">No async jobs yet. Generate a draft to queue one.</p>
+                  ) : null}
+                  {composeJobs.slice(0, 6).map((job) => (
+                    <div key={job.id} className="rounded-xl border border-[var(--ink-300)] bg-white p-3">
+                      <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">
+                        {job.status} - attempt {job.attempt_count}/{job.max_attempts} - {formatDate(job.created_at)}
                       </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => onOpenHistoryItem(item)}>Open</Button>
-                      <Button size="sm" variant="secondary" disabled={!selectedCollectionId || activeCollectionId === item.id} onClick={() => onAddToCollection(item.id)}>
-                        {activeCollectionId === item.id ? "Adding..." : "Add to Collection"}
-                      </Button>
-                      <Button size="sm" variant="secondary" disabled={activeShareId === item.id} onClick={() => onCreateShareLink(item.id)}>
-                        {activeShareId === item.id ? "Sharing..." : "Copy Link"}
-                      </Button>
-                      <Button size="sm" variant="secondary" disabled={activeExportId === item.id} onClick={() => onExportComposition(item.id, "markdown")}>
-                        {activeExportId === item.id ? "Exporting..." : "Export .md"}
-                      </Button>
-                      <Button size="sm" variant="secondary" disabled={activeExportId === item.id} onClick={() => onExportComposition(item.id, "text")}>
-                        {activeExportId === item.id ? "Exporting..." : "Export .txt"}
-                      </Button>
-                      {latestShare ? (
-                        <Button size="sm" variant="secondary" disabled={activeRevokeShareId === latestShare.id} onClick={() => onRevokeShare(latestShare.id)}>
-                          {activeRevokeShareId === latestShare.id ? "Revoking..." : "Revoke Link"}
+                      <p className="mt-1 text-sm font-semibold text-[var(--ink-900)]">{job.composition?.title ?? "Pending composition output"}</p>
+                      {job.last_error ? <p className="mt-1 text-xs text-red-700">{job.last_error}</p> : null}
+                      <div className="mt-2 flex gap-2">
+                        <Button size="sm" variant="secondary" disabled={job.status !== "completed"} onClick={() => onOpenComposeJobItem(job)}>
+                          Open Result
                         </Button>
-                      ) : null}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            {shareStatus ? <p className="mt-3 text-xs text-emerald-700">{shareStatus}</p> : null}
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-[var(--ink-300)] bg-white/80 p-3">
+                <p className="inline-flex items-center text-xs font-semibold uppercase tracking-[0.12em] text-[var(--ink-700)]">
+                  <History className="mr-2 h-3.5 w-3.5" /> Sharing & collections
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <input value={collectionTitle} onChange={(event) => setCollectionTitle(event.target.value)} className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm" placeholder="New collection title" />
+                  <input value={collectionDescription} onChange={(event) => setCollectionDescription(event.target.value)} className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm" placeholder="Optional description" />
+                  <select value={selectedCollectionId} onChange={(event) => setSelectedCollectionId(event.target.value)} className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm">
+                    <option value="">Select collection</option>
+                    {collections.map((collection) => (
+                      <option key={collection.id} value={collection.id}>{collection.title}</option>
+                    ))}
+                  </select>
+                  <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm">
+                    <input type="checkbox" checked={collectionIsPublic} onChange={(event) => setCollectionIsPublic(event.target.checked)} />
+                    Public collection
+                  </label>
+                </div>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={shareExpiryDays}
+                    onChange={(event) => setShareExpiryDays(Number(event.target.value || 30))}
+                    className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                    placeholder="Share expiry in days"
+                  />
+                  <input
+                    type="password"
+                    value={sharePassword}
+                    onChange={(event) => setSharePassword(event.target.value)}
+                    className="h-10 rounded-xl border border-[var(--ink-300)] bg-white/90 px-3 text-sm"
+                    placeholder="Optional share password"
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="secondary" onClick={onCreateCollection} disabled={activeCollectionId === "create"}>
+                    {activeCollectionId === "create" ? "Creating..." : "Create Collection"}
+                  </Button>
+                  {selectedCollectionId ? (
+                    <a className="inline-flex h-9 items-center rounded-full bg-[var(--sand-100)] px-4 text-xs font-semibold text-[var(--ink-800)]" href={`/collections/${collections.find((item) => item.id === selectedCollectionId)?.slug ?? ""}`} target="_blank" rel="noreferrer">
+                      Open Collection
+                    </a>
+                  ) : null}
+                  {isCollectionsLoading ? <span className="inline-flex h-9 items-center text-xs text-[var(--ink-600)]">Syncing collections...</span> : null}
+                </div>
+                <div className="mt-3 space-y-2">
+                  {isSharesLoading ? <p className="text-sm text-[var(--ink-700)]">Loading share analytics...</p> : null}
+                  {compositions.slice(0, 6).map((item) => {
+                    const latestShare = findLatestShareForComposition(item.id);
+                    return (
+                      <div key={item.id} className="rounded-xl border border-[var(--ink-300)] bg-white p-3">
+                        <p className="text-xs uppercase tracking-[0.1em] text-[var(--ink-500)]">{item.title}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Button size="sm" variant="secondary" disabled={!selectedCollectionId || activeCollectionId === item.id} onClick={() => onAddToCollection(item.id)}>
+                            {activeCollectionId === item.id ? "Adding..." : "Add to Collection"}
+                          </Button>
+                          <Button size="sm" variant="secondary" disabled={activeShareId === item.id} onClick={() => onCreateShareLink(item.id)}>
+                            {activeShareId === item.id ? "Sharing..." : "Copy Link"}
+                          </Button>
+                          <Button size="sm" variant="secondary" disabled={activeExportId === item.id} onClick={() => onExportComposition(item.id, "text")}>
+                            {activeExportId === item.id ? "Exporting..." : "Export .txt"}
+                          </Button>
+                          {latestShare ? (
+                            <Button size="sm" variant="secondary" disabled={activeRevokeShareId === latestShare.id} onClick={() => onRevokeShare(latestShare.id)}>
+                              {activeRevokeShareId === latestShare.id ? "Revoking..." : "Revoke Link"}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {shareStatus ? <p className="mt-3 text-xs text-emerald-700">{shareStatus}</p> : null}
+              </div>
+            </details>
           </>
         ) : (
           <div className="mt-5 rounded-xl bg-[var(--ink-950)] p-4 text-[var(--sand-50)]">
