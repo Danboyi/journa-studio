@@ -498,9 +498,18 @@ export function JournaShell() {
       if (payload.user) {
         setAuthUser(payload.user);
         setAuthToken(payload.accessToken ?? null);
-        await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections(), loadMemorySnapshot()]);
         setAuthPassword("");
         setAuthFullName("");
+        void Promise.all([
+          loadEntries(),
+          loadHistory(),
+          loadComposeJobs(),
+          loadShares(),
+          loadCollections(),
+          loadMemorySnapshot(),
+        ]).catch(() => {
+          // Surface-specific errors are handled in the individual loaders.
+        });
         return;
       }
 
