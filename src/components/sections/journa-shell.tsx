@@ -509,9 +509,9 @@ export function JournaShell() {
         return;
       }
 
-      if (payload.user) {
+      if (payload.user && payload.accessToken) {
         setAuthUser(payload.user);
-        setAuthToken(payload.accessToken ?? null);
+        setAuthToken(payload.accessToken);
         setAuthPassword("");
         setAuthFullName("");
         void Promise.all([
@@ -548,7 +548,7 @@ export function JournaShell() {
       }
 
       if (payload.needsEmailConfirmation) {
-        setError("Signup succeeded. Confirm your email, then sign in.");
+        setError("Signup succeeded, but no active session was created. Check your Supabase email/auth settings, then sign in.");
         setAuthMode("sign-in");
       } else {
         setError("Authentication finished but no active session was created.");

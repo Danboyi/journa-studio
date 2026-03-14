@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = NextResponse.json({
-      user: data.user,
+      user: data.session ? data.user : null,
       needsEmailConfirmation: !data.session,
       accessToken: data.session?.access_token ?? null,
     });
