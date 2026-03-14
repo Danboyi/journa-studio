@@ -1,14 +1,14 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpenText, WandSparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { LifeOnboardingCard } from "@/components/onboarding/life-onboarding-card";
-import { AuthCard } from "@/components/sections/auth-card";
+import { AppShellNav } from "@/components/sections/app-shell-nav";
 import { CopilotPanel } from "@/components/sections/copilot-panel";
 import { JournaHero } from "@/components/sections/journa-hero";
 import { JournalPanel } from "@/components/sections/journal-panel";
+import { SignedOutHome } from "@/components/sections/signed-out-home";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { dailyPromptPack, lifeCyclePromptPack } from "@/lib/prompt-packs";
@@ -136,7 +136,8 @@ function buildRecurrenceSummary(relatedMemories: {
 }
 
 export function JournaShell() {
-  const [mode, setMode] = useState<"journal" | "copilot">("journal");
+  const [, setMode] = useState<"journal" | "copilot">("journal");
+  const [appTab, setAppTab] = useState<"journal" | "reflect" | "memory" | "library" | "settings">("journal");
   const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -1070,137 +1071,324 @@ export function JournaShell() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <JournaHero isAuthenticated={isAuthenticated} userEmail={authUser?.email} onSignOut={handleSignOut} />
-      </motion.div>
-
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Button className="w-full sm:w-auto" variant={mode === "journal" ? "default" : "secondary"} onClick={() => setMode("journal")}>
-          <BookOpenText className="mr-2 h-4 w-4" /> Journal Mode
-        </Button>
-        <Button className="w-full sm:w-auto" variant={mode === "copilot" ? "default" : "secondary"} onClick={() => setMode("copilot")}>
-          <WandSparkles className="mr-2 h-4 w-4" /> Copilot Mode
-        </Button>
-      </div>
-
-      <LifeOnboardingCard
-        enabled={isAuthenticated}
-        onBuildNarrative={({ sourceText, voiceNotes }) => {
-          setComposeInput((prev) => ({
-            ...prev,
-            mode: "autobiography",
-            mood: "serious",
-            stylePreset: "soulful",
-            sourceText,
-            voiceNotes,
-            persist: true,
-          }));
-          setMode("copilot");
-        }}
-      />
-
       {!isAuthenticated ? (
-        <AuthCard
-          authMode={authMode}
-          authEmail={authEmail}
-          authPassword={authPassword}
-          authFullName={authFullName}
-          isAuthLoading={isAuthLoading}
-          setAuthMode={setAuthMode}
-          setAuthEmail={setAuthEmail}
-          setAuthPassword={setAuthPassword}
-          setAuthFullName={setAuthFullName}
-          onSubmit={handleAuthSubmit}
-        />
-      ) : null}
-
-      {mode === "journal" ? (
-        <JournalPanel
-          mood={mood}
-          moods={moods}
-          headline={headline}
-          journalText={journalText}
-          isAuthenticated={isAuthenticated}
-          isSavingEntry={isSavingEntry}
-          isEntriesLoading={isEntriesLoading}
-          entries={entries}
-          dailyPrompts={dailyPrompts}
-          setMood={setMood}
-          setHeadline={setHeadline}
-          setJournalText={setJournalText}
-          onSaveEntry={saveEntry}
-          onReflect={() => {
-            setComposeInput((prev) => ({ ...prev, sourceText: journalText, mood }));
-            setMode("copilot");
-          }}
-          formatDate={formatDate}
-        />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <SignedOutHome
+            authMode={authMode}
+            authEmail={authEmail}
+            authPassword={authPassword}
+            authFullName={authFullName}
+            isAuthLoading={isAuthLoading}
+            setAuthMode={setAuthMode}
+            setAuthEmail={setAuthEmail}
+            setAuthPassword={setAuthPassword}
+            setAuthFullName={setAuthFullName}
+            onSubmit={handleAuthSubmit}
+          />
+        </motion.div>
       ) : (
-        <CopilotPanel
-          isAuthenticated={isAuthenticated}
-          lifePrompts={lifePrompts}
-          composeInput={composeInput}
-          moods={moods}
-          writingModes={writingModes}
-          stylePresets={stylePresets}
-          copilotTemplates={copilotTemplates}
-          composeStatus={composeStatus}
-          result={result}
-          isComposeLoading={isComposeLoading}
-          isComposeJobsLoading={isComposeJobsLoading}
-          isHistoryLoading={isHistoryLoading}
-          isSharesLoading={isSharesLoading}
-          isCollectionsLoading={isCollectionsLoading}
-          composeJobs={composeJobs}
-          compositions={compositions}
-          shares={shares}
-          collections={collections}
-          selectedCollectionId={selectedCollectionId}
-          collectionTitle={collectionTitle}
-          collectionDescription={collectionDescription}
-          collectionIsPublic={collectionIsPublic}
-          shareExpiryDays={shareExpiryDays}
-          sharePassword={sharePassword}
-          activeCollectionId={activeCollectionId}
-          activeShareId={activeShareId}
-          activeExportId={activeExportId}
-          activeRevokeShareId={activeRevokeShareId}
-          shareStatus={shareStatus}
-          memorySnapshot={memorySnapshot}
-          retrievalQuery={retrievalQuery}
-          retrievalResults={retrievalResults}
-          isRetrievalLoading={isRetrievalLoading}
-          setComposeInput={(updater) => setComposeInput(updater)}
-          setRetrievalQuery={setRetrievalQuery}
-          setSelectedCollectionId={setSelectedCollectionId}
-          setCollectionTitle={setCollectionTitle}
-          setCollectionDescription={setCollectionDescription}
-          setCollectionIsPublic={setCollectionIsPublic}
-          setShareExpiryDays={setShareExpiryDays}
-          setSharePassword={setSharePassword}
-          onGenerateDraft={generateDraft}
-          onLoadComposeJobs={loadComposeJobs}
-          onOpenComposeJobItem={openComposeJobItem}
-          onCreateCollection={createCollection}
-          onAddToCollection={addToCollection}
-          onCreateShareLink={createShareLink}
-          onExportComposition={exportComposition}
-          onRevokeShare={revokeShare}
-          onOpenHistoryItem={openHistoryItem}
-          onRetrieve={handleRetrieve}
-          onUseRecapPrompt={useRecapPrompt}
-          findLatestShareForComposition={findLatestShareForComposition}
-          formatDate={formatDate}
-        />
-      )}
+        <>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <JournaHero isAuthenticated={isAuthenticated} userEmail={authUser?.email} onSignOut={handleSignOut} />
+          </motion.div>
 
-      {error ? (
+          <AppShellNav
+            activeTab={appTab}
+            onChange={(tab) => {
+              setAppTab(tab);
+              if (tab === "journal") setMode("journal");
+              if (tab === "reflect") setMode("copilot");
+            }}
+          />
+
+          <LifeOnboardingCard
+            enabled={isAuthenticated}
+            onBuildNarrative={({ sourceText, voiceNotes }) => {
+              setComposeInput((prev) => ({
+                ...prev,
+                mode: "autobiography",
+                mood: "serious",
+                stylePreset: "soulful",
+                sourceText,
+                voiceNotes,
+                persist: true,
+              }));
+              setMode("copilot");
+              setAppTab("reflect");
+            }}
+          />
+
+          {appTab === "journal" ? (
+            <JournalPanel
+              mood={mood}
+              moods={moods}
+              headline={headline}
+              journalText={journalText}
+              isAuthenticated={isAuthenticated}
+              isSavingEntry={isSavingEntry}
+              isEntriesLoading={isEntriesLoading}
+              entries={entries}
+              dailyPrompts={dailyPrompts}
+              setMood={setMood}
+              setHeadline={setHeadline}
+              setJournalText={setJournalText}
+              onSaveEntry={saveEntry}
+              onReflect={() => {
+                setComposeInput((prev) => ({ ...prev, sourceText: journalText, mood }));
+                setMode("copilot");
+                setAppTab("reflect");
+              }}
+              formatDate={formatDate}
+            />
+          ) : null}
+
+          {appTab === "reflect" ? (
+            <CopilotPanel
+              view="reflect"
+              isAuthenticated={isAuthenticated}
+              lifePrompts={lifePrompts}
+              composeInput={composeInput}
+              moods={moods}
+              writingModes={writingModes}
+              stylePresets={stylePresets}
+              copilotTemplates={copilotTemplates}
+              composeStatus={composeStatus}
+              result={result}
+              isComposeLoading={isComposeLoading}
+              isComposeJobsLoading={isComposeJobsLoading}
+              isHistoryLoading={isHistoryLoading}
+              isSharesLoading={isSharesLoading}
+              isCollectionsLoading={isCollectionsLoading}
+              composeJobs={composeJobs}
+              compositions={compositions}
+              shares={shares}
+              collections={collections}
+              selectedCollectionId={selectedCollectionId}
+              collectionTitle={collectionTitle}
+              collectionDescription={collectionDescription}
+              collectionIsPublic={collectionIsPublic}
+              shareExpiryDays={shareExpiryDays}
+              sharePassword={sharePassword}
+              activeCollectionId={activeCollectionId}
+              activeShareId={activeShareId}
+              activeExportId={activeExportId}
+              activeRevokeShareId={activeRevokeShareId}
+              shareStatus={shareStatus}
+              memorySnapshot={memorySnapshot}
+              retrievalQuery={retrievalQuery}
+              retrievalResults={retrievalResults}
+              isRetrievalLoading={isRetrievalLoading}
+              setComposeInput={(updater) => setComposeInput(updater)}
+              setRetrievalQuery={setRetrievalQuery}
+              setSelectedCollectionId={setSelectedCollectionId}
+              setCollectionTitle={setCollectionTitle}
+              setCollectionDescription={setCollectionDescription}
+              setCollectionIsPublic={setCollectionIsPublic}
+              setShareExpiryDays={setShareExpiryDays}
+              setSharePassword={setSharePassword}
+              onGenerateDraft={generateDraft}
+              onLoadComposeJobs={loadComposeJobs}
+              onOpenComposeJobItem={openComposeJobItem}
+              onCreateCollection={createCollection}
+              onAddToCollection={addToCollection}
+              onCreateShareLink={createShareLink}
+              onExportComposition={exportComposition}
+              onRevokeShare={revokeShare}
+              onOpenHistoryItem={openHistoryItem}
+              onRetrieve={handleRetrieve}
+              onUseRecapPrompt={useRecapPrompt}
+              findLatestShareForComposition={findLatestShareForComposition}
+              formatDate={formatDate}
+            />
+          ) : null}
+
+          {appTab === "memory" ? (
+            <CopilotPanel
+              view="memory"
+              isAuthenticated={isAuthenticated}
+              lifePrompts={lifePrompts}
+              composeInput={composeInput}
+              moods={moods}
+              writingModes={writingModes}
+              stylePresets={stylePresets}
+              copilotTemplates={copilotTemplates}
+              composeStatus={composeStatus}
+              result={result}
+              isComposeLoading={isComposeLoading}
+              isComposeJobsLoading={isComposeJobsLoading}
+              isHistoryLoading={isHistoryLoading}
+              isSharesLoading={isSharesLoading}
+              isCollectionsLoading={isCollectionsLoading}
+              composeJobs={composeJobs}
+              compositions={compositions}
+              shares={shares}
+              collections={collections}
+              selectedCollectionId={selectedCollectionId}
+              collectionTitle={collectionTitle}
+              collectionDescription={collectionDescription}
+              collectionIsPublic={collectionIsPublic}
+              shareExpiryDays={shareExpiryDays}
+              sharePassword={sharePassword}
+              activeCollectionId={activeCollectionId}
+              activeShareId={activeShareId}
+              activeExportId={activeExportId}
+              activeRevokeShareId={activeRevokeShareId}
+              shareStatus={shareStatus}
+              memorySnapshot={memorySnapshot}
+              retrievalQuery={retrievalQuery}
+              retrievalResults={retrievalResults}
+              isRetrievalLoading={isRetrievalLoading}
+              setComposeInput={(updater) => setComposeInput(updater)}
+              setRetrievalQuery={setRetrievalQuery}
+              setSelectedCollectionId={setSelectedCollectionId}
+              setCollectionTitle={setCollectionTitle}
+              setCollectionDescription={setCollectionDescription}
+              setCollectionIsPublic={setCollectionIsPublic}
+              setShareExpiryDays={setShareExpiryDays}
+              setSharePassword={setSharePassword}
+              onGenerateDraft={generateDraft}
+              onLoadComposeJobs={loadComposeJobs}
+              onOpenComposeJobItem={openComposeJobItem}
+              onCreateCollection={createCollection}
+              onAddToCollection={addToCollection}
+              onCreateShareLink={createShareLink}
+              onExportComposition={exportComposition}
+              onRevokeShare={revokeShare}
+              onOpenHistoryItem={openHistoryItem}
+              onRetrieve={handleRetrieve}
+              onUseRecapPrompt={useRecapPrompt}
+              findLatestShareForComposition={findLatestShareForComposition}
+              formatDate={formatDate}
+            />
+          ) : null}
+
+          {appTab === "library" ? (
+            <CopilotPanel
+              view="library"
+              isAuthenticated={isAuthenticated}
+              lifePrompts={lifePrompts}
+              composeInput={composeInput}
+              moods={moods}
+              writingModes={writingModes}
+              stylePresets={stylePresets}
+              copilotTemplates={copilotTemplates}
+              composeStatus={composeStatus}
+              result={result}
+              isComposeLoading={isComposeLoading}
+              isComposeJobsLoading={isComposeJobsLoading}
+              isHistoryLoading={isHistoryLoading}
+              isSharesLoading={isSharesLoading}
+              isCollectionsLoading={isCollectionsLoading}
+              composeJobs={composeJobs}
+              compositions={compositions}
+              shares={shares}
+              collections={collections}
+              selectedCollectionId={selectedCollectionId}
+              collectionTitle={collectionTitle}
+              collectionDescription={collectionDescription}
+              collectionIsPublic={collectionIsPublic}
+              shareExpiryDays={shareExpiryDays}
+              sharePassword={sharePassword}
+              activeCollectionId={activeCollectionId}
+              activeShareId={activeShareId}
+              activeExportId={activeExportId}
+              activeRevokeShareId={activeRevokeShareId}
+              shareStatus={shareStatus}
+              memorySnapshot={memorySnapshot}
+              retrievalQuery={retrievalQuery}
+              retrievalResults={retrievalResults}
+              isRetrievalLoading={isRetrievalLoading}
+              setComposeInput={(updater) => setComposeInput(updater)}
+              setRetrievalQuery={setRetrievalQuery}
+              setSelectedCollectionId={setSelectedCollectionId}
+              setCollectionTitle={setCollectionTitle}
+              setCollectionDescription={setCollectionDescription}
+              setCollectionIsPublic={setCollectionIsPublic}
+              setShareExpiryDays={setShareExpiryDays}
+              setSharePassword={setSharePassword}
+              onGenerateDraft={generateDraft}
+              onLoadComposeJobs={loadComposeJobs}
+              onOpenComposeJobItem={openComposeJobItem}
+              onCreateCollection={createCollection}
+              onAddToCollection={addToCollection}
+              onCreateShareLink={createShareLink}
+              onExportComposition={exportComposition}
+              onRevokeShare={revokeShare}
+              onOpenHistoryItem={openHistoryItem}
+              onRetrieve={handleRetrieve}
+              onUseRecapPrompt={useRecapPrompt}
+              findLatestShareForComposition={findLatestShareForComposition}
+              formatDate={formatDate}
+            />
+          ) : null}
+
+          {appTab === "settings" ? (
+            <CopilotPanel
+              view="settings"
+              isAuthenticated={isAuthenticated}
+              lifePrompts={lifePrompts}
+              composeInput={composeInput}
+              moods={moods}
+              writingModes={writingModes}
+              stylePresets={stylePresets}
+              copilotTemplates={copilotTemplates}
+              composeStatus={composeStatus}
+              result={result}
+              isComposeLoading={isComposeLoading}
+              isComposeJobsLoading={isComposeJobsLoading}
+              isHistoryLoading={isHistoryLoading}
+              isSharesLoading={isSharesLoading}
+              isCollectionsLoading={isCollectionsLoading}
+              composeJobs={composeJobs}
+              compositions={compositions}
+              shares={shares}
+              collections={collections}
+              selectedCollectionId={selectedCollectionId}
+              collectionTitle={collectionTitle}
+              collectionDescription={collectionDescription}
+              collectionIsPublic={collectionIsPublic}
+              shareExpiryDays={shareExpiryDays}
+              sharePassword={sharePassword}
+              activeCollectionId={activeCollectionId}
+              activeShareId={activeShareId}
+              activeExportId={activeExportId}
+              activeRevokeShareId={activeRevokeShareId}
+              shareStatus={shareStatus}
+              memorySnapshot={memorySnapshot}
+              retrievalQuery={retrievalQuery}
+              retrievalResults={retrievalResults}
+              isRetrievalLoading={isRetrievalLoading}
+              setComposeInput={(updater) => setComposeInput(updater)}
+              setRetrievalQuery={setRetrievalQuery}
+              setSelectedCollectionId={setSelectedCollectionId}
+              setCollectionTitle={setCollectionTitle}
+              setCollectionDescription={setCollectionDescription}
+              setCollectionIsPublic={setCollectionIsPublic}
+              setShareExpiryDays={setShareExpiryDays}
+              setSharePassword={setSharePassword}
+              onGenerateDraft={generateDraft}
+              onLoadComposeJobs={loadComposeJobs}
+              onOpenComposeJobItem={openComposeJobItem}
+              onCreateCollection={createCollection}
+              onAddToCollection={addToCollection}
+              onCreateShareLink={createShareLink}
+              onExportComposition={exportComposition}
+              onRevokeShare={revokeShare}
+              onOpenHistoryItem={openHistoryItem}
+              onRetrieve={handleRetrieve}
+              onUseRecapPrompt={useRecapPrompt}
+              findLatestShareForComposition={findLatestShareForComposition}
+              formatDate={formatDate}
+            />
+          ) : null}
+
+          {error ? (
         <Card className="mt-6 border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-700">{error}</p>
         </Card>
       ) : null}
 
-      {result ? (
+          {appTab === "reflect" && result ? (
         <Card className="mt-8 p-4 sm:p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1301,6 +1489,8 @@ export function JournaShell() {
           ) : null}
         </Card>
       ) : null}
+        </>
+      )}
     </div>
   );
 }

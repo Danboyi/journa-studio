@@ -72,7 +72,10 @@ type RetrievalResult = {
   whyRelated: string;
 };
 
+type CopilotPanelView = "reflect" | "memory" | "library" | "settings";
+
 type CopilotPanelProps = {
+  view: CopilotPanelView;
   isAuthenticated: boolean;
   lifePrompts: string[];
   composeInput: ComposeRequest;
@@ -135,6 +138,7 @@ function isReflectionMode(mode: WritingMode) {
 
 export function CopilotPanel(props: CopilotPanelProps) {
   const {
+    view,
     isAuthenticated,
     lifePrompts,
     composeInput,
@@ -191,10 +195,14 @@ export function CopilotPanel(props: CopilotPanelProps) {
   } = props;
 
   const reflectionMode = isReflectionMode(composeInput.mode);
+  const showReflect = view === "reflect";
+  const showMemory = view === "memory";
+  const showLibrary = view === "library";
+  const showSettings = view === "settings";
 
   return (
     <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-      <Card className="p-4 sm:p-6">
+      {showReflect ? <Card className="p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-[var(--ink-900)]">Copilot</h2>
@@ -309,21 +317,25 @@ export function CopilotPanel(props: CopilotPanelProps) {
           {isComposeLoading ? "Thinking..." : reflectionMode ? "Generate reflection" : "Generate rewrite"}
         </Button>
         {composeStatus ? <p className="mt-2 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
-      </Card>
+      </Card> : null}
 
       <Card className="p-4 sm:p-6">
-        <h3 className="text-sm font-semibold tracking-[0.12em] text-[var(--ink-700)] uppercase">Life-cycle prompts</h3>
-        <ul className="mt-3 space-y-3 text-sm text-[var(--ink-800)]">
-          {lifePrompts.map((prompt) => (
-            <li key={prompt} className="rounded-xl bg-white/80 p-3">
-              {prompt}
-            </li>
-          ))}
-        </ul>
+        <h3 className="text-sm font-semibold tracking-[0.12em] text-[var(--ink-700)] uppercase">
+          {showReflect ? "Life-cycle prompts" : showMemory ? "Memory" : showLibrary ? "Library" : "Settings"}
+        </h3>
+        {showReflect ? (
+          <ul className="mt-3 space-y-3 text-sm text-[var(--ink-800)]">
+            {lifePrompts.map((prompt) => (
+              <li key={prompt} className="rounded-xl bg-white/80 p-3">
+                {prompt}
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         {isAuthenticated ? (
           <>
-            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+            {showLibrary ? <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Library</p>
               <p className="mt-2 text-sm text-[var(--ink-700)]">
                 Your saved compositions live here. Open past work, export it, or organize it when you need to.
@@ -418,9 +430,9 @@ export function CopilotPanel(props: CopilotPanelProps) {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> : null}
 
-            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+            {showMemory ? <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Memory retrieval</p>
               <p className="mt-2 text-sm text-[var(--ink-700)]">
                 Ask Journa about a feeling, topic, or recurring concern to surface relevant writing.
@@ -466,9 +478,9 @@ export function CopilotPanel(props: CopilotPanelProps) {
                   </div>
                 </div>
               ) : null}
-            </div>
+            </div> : null}
 
-            <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+            {showSettings ? <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Privacy & trust</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl bg-white/85 p-3">
@@ -496,9 +508,9 @@ export function CopilotPanel(props: CopilotPanelProps) {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> : null}
 
-            {memorySnapshot?.reflectionMoments?.length ? (
+            {showMemory && memorySnapshot?.reflectionMoments?.length ? (
               <div className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">Recent reflection signals</p>
                 <div className="mt-3 space-y-3">
@@ -513,7 +525,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
               </div>
             ) : null}
 
-            <details className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
+            {showLibrary ? <details className="mt-5 rounded-xl border border-[var(--ink-300)] bg-white/70 p-4">
               <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-600)]">
                 Advanced workspace
               </summary>
@@ -626,7 +638,7 @@ export function CopilotPanel(props: CopilotPanelProps) {
                 </div>
                 {shareStatus ? <p className="mt-3 text-xs text-emerald-700">{shareStatus}</p> : null}
               </div>
-            </details>
+            </details> : null}
           </>
         ) : (
           <div className="mt-5 rounded-xl bg-[var(--ink-950)] p-4 text-[var(--sand-50)]">
