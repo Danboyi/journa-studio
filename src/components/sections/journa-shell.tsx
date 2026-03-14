@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
 import { LifeOnboardingCard } from "@/components/onboarding/life-onboarding-card";
+import { AppHeader } from "@/components/sections/app-header";
 import { AppShellNav } from "@/components/sections/app-shell-nav";
 import { CopilotPanel } from "@/components/sections/copilot-panel";
-import { JournaHero } from "@/components/sections/journa-hero";
 import { JournalPanel } from "@/components/sections/journal-panel";
 import { SignedOutHome } from "@/components/sections/signed-out-home";
 import { Button } from "@/components/ui/button";
@@ -233,14 +233,17 @@ export function JournaShell() {
     }>;
   } | null>(null);
 
-  async function apiFetch(input: string, init: RequestInit = {}) {
-    const headers = new Headers(init.headers ?? {});
-    if (authToken) {
-      headers.set("Authorization", `Bearer ${authToken}`);
-    }
+  const apiFetch = useCallback(
+    async (input: string, init: RequestInit = {}) => {
+      const headers = new Headers(init.headers ?? {});
+      if (authToken) {
+        headers.set("Authorization", `Bearer ${authToken}`);
+      }
 
-    return fetch(input, { ...init, headers });
-  }
+      return fetch(input, { ...init, headers });
+    },
+    [authToken],
+  );
 
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
@@ -1103,7 +1106,7 @@ export function JournaShell() {
       ) : (
         <>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <JournaHero isAuthenticated={isAuthenticated} userEmail={authUser?.email} onSignOut={handleSignOut} />
+            <AppHeader userEmail={authUser?.email} onSignOut={handleSignOut} />
           </motion.div>
 
           <AppShellNav

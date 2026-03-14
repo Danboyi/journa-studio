@@ -19,7 +19,7 @@ const items: Array<{ key: AppTab; label: string; icon: typeof BookOpenText }> = 
 
 export function AppShellNav({ activeTab, onChange }: AppShellNavProps) {
   return (
-    <div className="mt-6 grid grid-cols-5 gap-2 rounded-3xl border border-[var(--ink-200)] bg-white/80 p-2 shadow-sm backdrop-blur">
+    <div className="sticky bottom-3 z-40 mt-6 grid grid-cols-5 gap-2 rounded-3xl border border-[var(--ink-200)] bg-white/90 p-2 shadow-lg backdrop-blur sm:sticky sm:top-4 sm:bottom-auto">
       {items.map((item) => {
         const Icon = item.icon;
         const active = activeTab === item.key;
