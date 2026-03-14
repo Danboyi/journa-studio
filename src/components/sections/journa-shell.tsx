@@ -527,9 +527,31 @@ export function JournaShell() {
         return;
       }
 
+      const sessionRes = await apiFetch("/api/auth/session");
+      const sessionPayload = (await sessionRes.json()) as { user?: SessionUser; error?: string };
+
+      if (sessionRes.ok && sessionPayload.user) {
+        setAuthUser(sessionPayload.user);
+        setAuthPassword("");
+        setAuthFullName("");
+        void Promise.all([
+          loadEntries(),
+          loadHistory(),
+          loadComposeJobs(),
+          loadShares(),
+          loadCollections(),
+          loadMemorySnapshot(),
+        ]).catch(() => {
+          // Surface-specific errors are handled in the individual loaders.
+        });
+        return;
+      }
+
       if (payload.needsEmailConfirmation) {
         setError("Signup succeeded. Confirm your email, then sign in.");
         setAuthMode("sign-in");
+      } else {
+        setError("Authentication finished but no active session was created.");
       }
     } finally {
       setIsAuthLoading(false);
