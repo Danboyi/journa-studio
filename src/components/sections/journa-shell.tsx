@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import { LifeOnboardingCard } from "@/components/onboarding/life-onboarding-card";
@@ -144,6 +144,7 @@ export function JournaShell() {
   const [authFullName, setAuthFullName] = useState("");
   const [authUser, setAuthUser] = useState<SessionUser | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const authFlowStartedRef = useRef(false);
 
   const [journalText, setJournalText] = useState("");
   const [headline, setHeadline] = useState("Today in one sentence");
@@ -435,12 +436,18 @@ export function JournaShell() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const bootstrap = async () => {
       setIsAuthLoading(true);
 
       try {
         const res = await apiFetch("/api/auth/session");
         const payload = (await res.json()) as { user?: SessionUser; error?: string };
+
+        if (cancelled || authFlowStartedRef.current) {
+          return;
+        }
 
         if (!res.ok || !payload.user) {
           setAuthUser(null);
@@ -451,14 +458,21 @@ export function JournaShell() {
         setAuthUser(payload.user);
         await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections(), loadMemorySnapshot()]);
       } finally {
-        setIsAuthLoading(false);
+        if (!cancelled) {
+          setIsAuthLoading(false);
+        }
       }
     };
 
     void bootstrap();
-  }, [loadEntries, loadHistory, loadComposeJobs, loadShares, loadCollections, loadMemorySnapshot]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadEntries, loadHistory, loadComposeJobs, loadShares, loadCollections, loadMemorySnapshot, apiFetch]);
 
   async function handleAuthSubmit() {
+    authFlowStartedRef.current = true;
     setIsAuthLoading(true);
     setError(null);
 
@@ -531,6 +545,7 @@ export function JournaShell() {
       // Ignore sign out API errors and clear local auth state.
     }
 
+    authFlowStartedRef.current = false;
     setAuthUser(null);
     setAuthToken(null);
     setEntries([]);
