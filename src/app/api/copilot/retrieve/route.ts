@@ -206,13 +206,13 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       query,
       entries: matchedEntries.slice(0, 8).map((item) => {
-        const rest = { ...item };
-        delete rest.semanticText;
+        const { semanticText, ...rest } = item;
+        void semanticText;
         return rest;
       }),
       compositions: matchedCompositions.slice(0, 8).map((item) => {
-        const rest = { ...item };
-        delete rest.semanticText;
+        const { semanticText, ...rest } = item;
+        void semanticText;
         return rest;
       }),
     });
