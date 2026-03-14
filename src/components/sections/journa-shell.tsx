@@ -143,6 +143,7 @@ export function JournaShell() {
   const [authPassword, setAuthPassword] = useState("");
   const [authFullName, setAuthFullName] = useState("");
   const [authUser, setAuthUser] = useState<SessionUser | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   const [journalText, setJournalText] = useState("");
   const [headline, setHeadline] = useState("Today in one sentence");
@@ -232,6 +233,15 @@ export function JournaShell() {
     }>;
   } | null>(null);
 
+  async function apiFetch(input: string, init: RequestInit = {}) {
+    const headers = new Headers(init.headers ?? {});
+    if (authToken) {
+      headers.set("Authorization", `Bearer ${authToken}`);
+    }
+
+    return fetch(input, { ...init, headers });
+  }
+
   const [composeInput, setComposeInput] = useState<ComposeRequest>({
     mode: "essay",
     mood: "serious",
@@ -271,7 +281,7 @@ export function JournaShell() {
     setIsEntriesLoading(true);
 
     try {
-      const res = await fetch("/api/journal/entries");
+      const res = await apiFetch("/api/journal/entries");
       const payload = (await res.json()) as {
         entries?: JournalEntry[];
         error?: string;
@@ -292,7 +302,7 @@ export function JournaShell() {
     setIsHistoryLoading(true);
 
     try {
-      const res = await fetch("/api/copilot/history");
+      const res = await apiFetch("/api/copilot/history");
       const payload = (await res.json()) as {
         compositions?: CompositionHistoryItem[];
         error?: string;
@@ -313,7 +323,7 @@ export function JournaShell() {
     setIsComposeJobsLoading(true);
 
     try {
-      const res = await fetch("/api/copilot/compose/jobs");
+      const res = await apiFetch("/api/copilot/compose/jobs");
       const payload = (await res.json()) as {
         jobs?: ComposeJobItem[];
         error?: string;
@@ -334,7 +344,7 @@ export function JournaShell() {
     setIsSharesLoading(true);
 
     try {
-      const res = await fetch("/api/copilot/shares");
+      const res = await apiFetch("/api/copilot/shares");
       const payload = (await res.json()) as {
         shares?: CompositionShareItem[];
         error?: string;
@@ -355,7 +365,7 @@ export function JournaShell() {
     setIsCollectionsLoading(true);
 
     try {
-      const res = await fetch("/api/collections");
+      const res = await apiFetch("/api/collections");
       const payload = (await res.json()) as {
         collections?: Collection[];
         error?: string;
@@ -377,7 +387,7 @@ export function JournaShell() {
 
   const loadMemorySnapshot = useCallback(async () => {
     try {
-      const res = await fetch("/api/copilot/memory");
+      const res = await apiFetch("/api/copilot/memory");
       const payload = (await res.json()) as {
         recurringMoods: Array<{ mood: string; count: number }>;
         recurringThemes: Array<{ theme: string; count: number }>;
@@ -426,11 +436,12 @@ export function JournaShell() {
       setIsAuthLoading(true);
 
       try {
-        const res = await fetch("/api/auth/session");
+        const res = await apiFetch("/api/auth/session");
         const payload = (await res.json()) as { user?: SessionUser; error?: string };
 
         if (!res.ok || !payload.user) {
           setAuthUser(null);
+          setAuthToken(null);
           return;
         }
 
@@ -473,6 +484,7 @@ export function JournaShell() {
         error?: string;
         user?: SessionUser;
         needsEmailConfirmation?: boolean;
+        accessToken?: string | null;
       };
 
       if (!res.ok || payload.error) {
@@ -482,6 +494,7 @@ export function JournaShell() {
 
       if (payload.user) {
         setAuthUser(payload.user);
+        setAuthToken(payload.accessToken ?? null);
         await Promise.all([loadEntries(), loadHistory(), loadComposeJobs(), loadShares(), loadCollections(), loadMemorySnapshot()]);
         setAuthPassword("");
         setAuthFullName("");
@@ -507,6 +520,7 @@ export function JournaShell() {
     }
 
     setAuthUser(null);
+    setAuthToken(null);
     setEntries([]);
     setCompositions([]);
     setComposeJobs([]);
@@ -529,7 +543,7 @@ export function JournaShell() {
     setError(null);
 
     try {
-      const res = await fetch("/api/journal/entries", {
+      const res = await apiFetch("/api/journal/entries", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -561,7 +575,7 @@ export function JournaShell() {
   }
 
   async function retrieveMemories(query: string) {
-    const res = await fetch(`/api/copilot/retrieve?q=${encodeURIComponent(query.trim())}`);
+    const res = await apiFetch(`/api/copilot/retrieve?q=${encodeURIComponent(query.trim())}`);
     const payload = (await res.json()) as {
       error?: string;
       entries?: Array<{
@@ -651,7 +665,7 @@ export function JournaShell() {
 
     try {
       if (!authUser) {
-        const res = await fetch("/api/copilot/compose", {
+        const res = await apiFetch("/api/copilot/compose", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(composeInput),
@@ -679,7 +693,7 @@ export function JournaShell() {
         return;
       }
 
-      const enqueueRes = await fetch("/api/copilot/compose/jobs", {
+      const enqueueRes = await apiFetch("/api/copilot/compose/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -803,7 +817,7 @@ export function JournaShell() {
     setError(null);
 
     try {
-      const res = await fetch("/api/copilot/shares", {
+      const res = await apiFetch("/api/copilot/shares", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -842,7 +856,7 @@ export function JournaShell() {
     setError(null);
 
     try {
-      const res = await fetch("/api/collections", {
+      const res = await apiFetch("/api/collections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -929,7 +943,7 @@ export function JournaShell() {
     setError(null);
 
     try {
-      const res = await fetch("/api/copilot/export", {
+      const res = await apiFetch("/api/copilot/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ compositionId, format }),

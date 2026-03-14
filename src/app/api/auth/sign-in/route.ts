@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       return attachRequestId(fail, trace.requestId);
     }
 
-    const response = NextResponse.json({ user: data.user });
+    const response = NextResponse.json({ user: data.user, accessToken: data.session.access_token });
     setSessionCookie(response, data.session.access_token);
     endRequest(trace, 200, { user_id: data.user.id });
     return attachRequestId(response, trace.requestId);
