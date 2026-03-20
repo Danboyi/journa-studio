@@ -1,0 +1,18 @@
+{
+  "name": "journa — private memory studio",
+  "short_name": "journa",
+  "description": "A private journal that helps you understand your life as you live it.",
+  "start_url": "/journal",
+  "display": "standalone",
+  "background_color": "#eef6ff",
+  "theme_color": "#0b1320",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/globe.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
