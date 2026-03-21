@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       return attachRequestId(response, trace.requestId);
     }
 
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser(accessToken);
 
     if (error || !data.user) {
       failRequest(trace, 401, "invalid_or_expired_token");

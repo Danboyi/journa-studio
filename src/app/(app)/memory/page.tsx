@@ -12,9 +12,8 @@ function formatDate(value: string) {
 
 export default function MemoryPage() {
   const memory = useMemory();
-  const { loadSnapshot } = memory;
 
-  useEffect(() => { void loadSnapshot(); }, [loadSnapshot]);
+  useEffect(() => { void memory.loadSnapshot(); }, [memory.loadSnapshot]);
 
   const { snapshot, isLoading, query, setQuery, results, isRetrieving, handleRetrieve, error } = memory;
 
