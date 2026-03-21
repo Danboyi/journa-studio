@@ -32,7 +32,16 @@ export async function GET(request: NextRequest) {
       return attachRequestId(response, trace.requestId);
     }
 
-    const response = NextResponse.json({ user: data.user });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed_at")
+      .eq("id", data.user.id)
+      .single();
+
+    const response = NextResponse.json({
+      user: data.user,
+      onboardingCompleted: !!profile?.onboarding_completed_at,
+    });
     endRequest(trace, 200, { user_id: data.user.id });
     return attachRequestId(response, trace.requestId);
   } catch (error) {

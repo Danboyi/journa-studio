@@ -20,9 +20,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     fetch("/api/auth/session")
       .then((res) => res.json())
-      .then((payload: { user?: SessionUser }) => {
+      .then((payload: { user?: SessionUser; onboardingCompleted?: boolean }) => {
         if (payload.user) {
           setUser(payload.user);
+          if (!payload.onboardingCompleted) {
+            router.replace("/onboarding");
+          }
         } else {
           router.replace("/");
         }
