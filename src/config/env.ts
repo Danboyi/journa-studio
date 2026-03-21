@@ -10,7 +10,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  AUTH_COOKIE_NAME: z.string().min(1).default("journa_session"),
+  AUTH_COOKIE_NAME: z.string().min(1).default("journa_session").transform((s) => s.trim()),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   JOB_RUNNER_TOKEN: z.string().min(1).optional(),
