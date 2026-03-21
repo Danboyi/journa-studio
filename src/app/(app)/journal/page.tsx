@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Flame,
   Heart,
+  Lightbulb,
   Mail,
   Moon,
   PenLine,
@@ -74,6 +75,7 @@ export default function JournalPage() {
     loadEntries, saveEntry,
     streak, loadStreak,
     memories, loadMemories,
+    nudges, loadNudges,
   } = useJournal();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -86,7 +88,8 @@ export default function JournalPage() {
     void loadEntries();
     void loadStreak();
     void loadMemories();
-  }, [loadEntries, loadStreak, loadMemories]);
+    void loadNudges();
+  }, [loadEntries, loadStreak, loadMemories, loadNudges]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -214,6 +217,28 @@ export default function JournalPage() {
           );
         })}
       </div>
+
+      {/* ── AI Nudges ── */}
+      <AnimatePresence>
+        {nudges.length > 0 && !isFocused && body.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="mb-4 space-y-2"
+          >
+            {nudges.map((nudge, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2.5 rounded-2xl border border-[var(--brand-300)]/30 bg-[var(--brand-300)]/5 px-4 py-3"
+              >
+                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-700)]" />
+                <p className="text-sm text-[var(--ink-800)]">{nudge.text}</p>
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Daily prompt (only when empty + free-write) ── */}
       <AnimatePresence>

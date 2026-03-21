@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Search, Loader2 } from "lucide-react";
 
@@ -8,6 +8,78 @@ import { useMemory } from "@/hooks/use-memory";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+}
+
+const moodColor: Record<string, string> = {
+  serious: "bg-slate-400",
+  funny: "bg-amber-400",
+  sad: "bg-blue-400",
+  sorrowful: "bg-indigo-400",
+  horror: "bg-red-400",
+  suspense: "bg-orange-400",
+  "soul-piercing": "bg-purple-400",
+};
+
+const moodEmoji: Record<string, string> = {
+  serious: "🧘",
+  funny: "😄",
+  sad: "😞",
+  sorrowful: "💙",
+  horror: "😨",
+  suspense: "😬",
+  "soul-piercing": "✨",
+};
+
+function MoodCalendar({ points }: { points: Array<{ date: string; count: number; topMood: string | null }> }) {
+  const grid = useMemo(() => {
+    const today = new Date();
+    const days: Array<{ date: string; mood: string | null; count: number }> = [];
+    const pointMap = new Map(points.map((p) => [p.date, p]));
+
+    // Build last 30 days
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const point = pointMap.get(key);
+      days.push({
+        date: key,
+        mood: point?.topMood ?? null,
+        count: point?.count ?? 0,
+      });
+    }
+    return days;
+  }, [points]);
+
+  return (
+    <div>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">
+        Your last 30 days
+      </p>
+      <div className="grid grid-cols-10 gap-1.5">
+        {grid.map((day) => (
+          <div
+            key={day.date}
+            title={`${day.date}${day.mood ? ` · ${day.mood} (${day.count})` : ""}`}
+            className={`aspect-square rounded-md transition-all ${
+              day.mood
+                ? `${moodColor[day.mood] ?? "bg-[var(--ink-300)]"} opacity-${Math.min(100, 40 + day.count * 20)}`
+                : "bg-[var(--ink-300)]/15"
+            }`}
+          />
+        ))}
+      </div>
+      {/* Legend */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {Object.entries(moodEmoji).map(([mood, emoji]) => (
+          <div key={mood} className="flex items-center gap-1">
+            <div className={`h-2.5 w-2.5 rounded-sm ${moodColor[mood]}`} />
+            <span className="text-[10px] capitalize text-[var(--ink-500)]">{emoji} {mood}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function MemoryPage() {
@@ -96,6 +168,13 @@ export default function MemoryPage() {
         </div>
       ) : snapshot ? (
         <div className="space-y-6">
+          {/* Mood calendar */}
+          {snapshot.timelinePoints.length > 0 && (
+            <div className="rounded-2xl border border-[var(--ink-300)]/30 bg-white/60 p-4">
+              <MoodCalendar points={snapshot.timelinePoints} />
+            </div>
+          )}
+
           {/* Weekly recap */}
           {snapshot.weeklyRecap.entryCount > 0 && (
             <div className="rounded-2xl bg-[var(--sand-50)] p-4">

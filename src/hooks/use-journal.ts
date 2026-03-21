@@ -8,6 +8,11 @@ interface OnThisDayMemory {
   label: string;
 }
 
+interface Nudge {
+  text: string;
+  type: string;
+}
+
 export function useJournal() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +36,9 @@ export function useJournal() {
 
   // On This Day state
   const [memories, setMemories] = useState<OnThisDayMemory[]>([]);
+
+  // Nudge state
+  const [nudges, setNudges] = useState<Nudge[]>([]);
 
   const loadEntries = useCallback(async () => {
     setIsLoading(true);
@@ -71,6 +79,18 @@ export function useJournal() {
       const payload = (await res.json()) as { memories?: OnThisDayMemory[] };
       if (res.ok && payload.memories) {
         setMemories(payload.memories);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, []);
+
+  const loadNudges = useCallback(async () => {
+    try {
+      const res = await fetch("/api/journal/nudge");
+      const payload = (await res.json()) as { nudges?: Nudge[] };
+      if (res.ok && payload.nudges) {
+        setNudges(payload.nudges);
       }
     } catch {
       // Non-critical
@@ -147,5 +167,8 @@ export function useJournal() {
     // On This Day
     memories,
     loadMemories,
+    // Nudges
+    nudges,
+    loadNudges,
   };
 }
