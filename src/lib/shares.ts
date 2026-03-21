@@ -17,7 +17,6 @@ interface PublicShareRow {
     mood: string;
     mode: string;
     style_preset: string | null;
-    editorial_notes: string[];
     created_at: string;
   } | null;
 }
@@ -46,7 +45,7 @@ export async function getPublicShareByToken(
   const { data, error } = await supabase
     .from("composition_shares")
     .select(
-      "id, token, expires_at, is_revoked, password_hash, view_count, last_viewed_at, composition:compositions(id, title, excerpt, draft, mood, mode, style_preset, editorial_notes, created_at)",
+      "id, token, expires_at, is_revoked, password_hash, view_count, last_viewed_at, composition:compositions(id, title, excerpt, draft, mood, mode, style_preset, created_at)",
     )
     .eq("token", token)
     .single<PublicShareRow>();
