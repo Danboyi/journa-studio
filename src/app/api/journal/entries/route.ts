@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getUser(accessToken);
 
     if (userError || !user) {
       failRequest(trace, 401, "invalid_session");
