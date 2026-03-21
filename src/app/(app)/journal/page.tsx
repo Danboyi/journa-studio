@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 import { useJournal } from "@/hooks/use-journal";
-import { dailyPromptPack } from "@/lib/prompt-packs";
+import { dailyPromptPack, entryTypePrompts, streakMilestones } from "@/lib/prompt-packs";
 import type { EntryType, NarrativeMood } from "@/types/journa";
 
 /* ── constants ──────────────────────────────────────────── */
@@ -84,6 +84,11 @@ export default function JournalPage() {
   const [saved, setSaved] = useState(false);
   const [prompt] = useState(() => dailyPromptPack[Math.floor(Math.random() * dailyPromptPack.length)]);
 
+  // Entry-type-specific prompt
+  const typePrompt = entryTypePrompts[entryType]?.[
+    Math.floor(Date.now() / 86400000) % (entryTypePrompts[entryType]?.length ?? 1)
+  ];
+
   useEffect(() => {
     void loadEntries();
     void loadStreak();
@@ -134,9 +139,10 @@ export default function JournalPage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-orange-900">
-                {streak.currentStreak === 1
-                  ? "First day! Keep going tomorrow."
-                  : `${streak.currentStreak} day streak`}
+                {streakMilestones[streak.currentStreak] ??
+                  (streak.currentStreak === 1
+                    ? "First day! Keep going tomorrow."
+                    : `${streak.currentStreak} day streak`)}
               </p>
               <p className="text-xs text-orange-700/70">
                 {streak.wroteToday ? "You wrote today" : "Write to keep your streak"}
@@ -240,9 +246,9 @@ export default function JournalPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Daily prompt (only when empty + free-write) ── */}
+      {/* ── Daily prompt (context-aware by entry type) ── */}
       <AnimatePresence>
-        {!isFocused && body.length === 0 && entryType === "free-write" && (
+        {!isFocused && body.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -250,9 +256,11 @@ export default function JournalPage() {
             className="mb-4"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--ink-500)]">
-              Today&apos;s prompt
+              {entryType === "free-write" ? "Today\u2019s prompt" : activeType.label + " prompt"}
             </p>
-            <p className="mt-1 text-sm text-[var(--ink-700)]">{prompt}</p>
+            <p className="mt-1 text-sm text-[var(--ink-700)]">
+              {entryType === "free-write" ? prompt : typePrompt}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
