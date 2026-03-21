@@ -24,13 +24,13 @@ class OpenAIComposeProvider implements ComposeProvider {
   private client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
   async compose(input: ComposeRequestInput): Promise<ComposeResponseOutput> {
-    const response = await this.client.responses.create({
+    const completion = await this.client.chat.completions.create({
       model: env.OPENAI_MODEL,
-      input: buildComposePrompt(input),
+      messages: [{ role: "user", content: buildComposePrompt(input) }],
       temperature: 0.8,
-      text: {
-        format: {
-          type: "json_schema",
+      response_format: {
+        type: "json_schema",
+        json_schema: {
           name: "compose_response",
           strict: true,
           schema: composeResponseJsonSchema,
@@ -38,7 +38,7 @@ class OpenAIComposeProvider implements ComposeProvider {
       },
     });
 
-    const text = response.output_text;
+    const text = completion.choices[0]?.message?.content ?? "";
 
     let parsed: unknown;
 
