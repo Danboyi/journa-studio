@@ -7,12 +7,16 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
+  ChevronRight,
   CloudRain,
   Droplets,
+  Eye,
   Feather,
   Flame,
+  Footprints,
   Ghost,
   Heart,
+  HelpCircle,
   Lightbulb,
   Mail,
   Mic,
@@ -32,7 +36,7 @@ import { useJournal } from "@/hooks/use-journal";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { useGravity, type GravityTheme } from "@/hooks/use-gravity";
 import { dailyPromptPack, entryTypePrompts, streakMilestones } from "@/lib/prompt-packs";
-import type { EntryType, NarrativeMood } from "@/types/journa";
+import type { CompositionHistoryItem, EntryType, NarrativeMood, ReflectionPayload } from "@/types/journa";
 
 /* ── constants ──────────────────────────────────────────────── */
 
@@ -133,6 +137,128 @@ function GravityMiniCard({ theme }: { theme: GravityTheme }) {
   );
 }
 
+/* ── Reflection version card ─────────────────────────────────── */
+
+const modeLabel: Record<string, string> = {
+  "daily-journal": "Journal",
+  story: "Story",
+  essay: "Essay",
+  "statement-of-purpose": "Statement",
+  biography: "Biography",
+  autobiography: "Autobiography",
+  "life-documentation": "Life doc",
+};
+
+function ReflectionVersionCard({
+  reflection,
+  versionNumber,
+  isExpanded,
+  onToggle,
+}: {
+  reflection: CompositionHistoryItem;
+  versionNumber: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const r = reflection.reflection as ReflectionPayload | null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="overflow-hidden rounded-2xl border border-[var(--ink-300)]/30 bg-white/60"
+    >
+      {/* Header row — always visible */}
+      <button
+        onClick={onToggle}
+        className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[var(--sand-50)]"
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <span className="shrink-0 rounded-full bg-[var(--brand-300)]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brand-700)]">
+            v{versionNumber}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--ink-950)] line-clamp-1">
+              {reflection.title}
+            </p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span className="text-[11px] text-[var(--ink-500)]">
+                {modeLabel[reflection.mode] ?? reflection.mode}
+              </span>
+              <span className="text-[11px] text-[var(--ink-300)]">·</span>
+              <span className="text-[11px] capitalize text-[var(--ink-500)]">{reflection.mood}</span>
+              <span className="text-[11px] text-[var(--ink-300)]">·</span>
+              <span className="text-[11px] text-[var(--ink-400)]">
+                {new Intl.DateTimeFormat("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                }).format(new Date(reflection.created_at))}
+              </span>
+            </div>
+          </div>
+        </div>
+        <ChevronRight
+          className={`mt-0.5 h-4 w-4 shrink-0 text-[var(--ink-400)] transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+        />
+      </button>
+
+      {/* Expanded content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-3 border-t border-[var(--ink-300)]/20 px-4 pb-4 pt-3">
+              {/* Excerpt */}
+              <p className="text-[13px] italic leading-relaxed text-[var(--ink-600)]">
+                {reflection.excerpt}
+              </p>
+
+              {/* 4-part reflection breakdown */}
+              {r && (
+                <div className="space-y-2">
+                  {[
+                    { icon: Eye,         label: "What happened",         content: r.summary,             accent: "bg-white/80 border-[var(--ink-300)]/30" },
+                    { icon: Footprints,  label: "What mattered",         content: r.whatMattered,        accent: "bg-[var(--gravity-50)] border-[var(--gravity-200)]" },
+                    { icon: Lightbulb,   label: "Beneath the surface",   content: r.beneathTheSurface,   accent: "bg-[var(--brand-300)]/5 border-[var(--brand-300)]/25" },
+                    { icon: HelpCircle,  label: "The question underneath",content: r.followUpQuestion,   accent: "bg-[var(--sand-50)] border-[var(--ink-300)]/30" },
+                  ].map(({ icon: Icon, label, content, accent }) => (
+                    <div key={label} className={`rounded-xl border p-3 ${accent}`}>
+                      <div className="mb-1 flex items-center gap-1.5">
+                        <Icon className="h-3 w-3 text-[var(--ink-400)]" strokeWidth={1.8} />
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--ink-400)]">
+                          {label}
+                        </p>
+                      </div>
+                      <p className="text-[13px] leading-relaxed text-[var(--ink-800)]">{content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Polished draft */}
+              <div>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--ink-400)]">
+                  Polished draft
+                </p>
+                <div className="rounded-xl border border-[var(--ink-300)]/25 bg-white/70 p-3.5 text-[13px] leading-[1.8] text-[var(--ink-900)] whitespace-pre-wrap">
+                  {reflection.draft}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 /* ── page ───────────────────────────────────────────────────── */
 
 export default function JournalPage() {
@@ -158,6 +284,12 @@ export default function JournalPage() {
   const [prompt] = useState(
     () => dailyPromptPack[Math.floor(Math.random() * dailyPromptPack.length)],
   );
+
+  // Per-entry reflection state
+  const [selectedEntryId, setSelectedEntryId]           = useState<string | null>(null);
+  const [entryReflections, setEntryReflections]         = useState<CompositionHistoryItem[]>([]);
+  const [isLoadingReflections, setIsLoadingReflections] = useState(false);
+  const [expandedReflectionId, setExpandedReflectionId] = useState<string | null>(null);
 
   const { state: voiceState, interim, toggle: toggleVoice } = useVoiceInput({
     onTranscript: (text) => {
@@ -185,17 +317,39 @@ export default function JournalPage() {
     el.style.height = `${el.scrollHeight}px`;
   }, [body]);
 
+  async function loadEntryReflections(entryId: string) {
+    setIsLoadingReflections(true);
+    setEntryReflections([]);
+    try {
+      const res = await fetch(`/api/journal/entries/${entryId}/reflections`);
+      const payload = (await res.json()) as { reflections?: CompositionHistoryItem[] };
+      if (res.ok && payload.reflections) {
+        setEntryReflections(payload.reflections);
+      }
+    } catch {
+      // non-critical — fail silently
+    } finally {
+      setIsLoadingReflections(false);
+    }
+  }
+
   async function handleSave() {
     const entry = await saveEntry();
     if (entry) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      setSelectedEntryId(entry.id);
+      setEntryReflections([]);
+      setExpandedReflectionId(null);
     }
   }
 
   function handleReflect() {
     try {
-      localStorage.setItem("journa_compose_draft", JSON.stringify({ sourceText: body, mood }));
+      localStorage.setItem(
+        "journa_compose_draft",
+        JSON.stringify({ sourceText: body, mood, entryId: selectedEntryId ?? null }),
+      );
     } catch { /* ignore */ }
     router.push("/reflect");
   }
@@ -212,6 +366,9 @@ export default function JournalPage() {
     setBody("");
     setHeadline("");
     setIsFocused(false);
+    setSelectedEntryId(null);
+    setEntryReflections([]);
+    setExpandedReflectionId(null);
     textareaRef.current?.blur();
   }
 
@@ -441,11 +598,14 @@ export default function JournalPage() {
                         transition={{ delay: i * 0.03 }}
                         className="card card-hover cursor-pointer p-4 transition-all active:scale-[0.99]"
                         onClick={() => {
+                          setSelectedEntryId(entry.id);
                           setHeadline(entry.headline ?? "");
                           setBody(entry.body);
                           setMood(entry.mood);
                           setEntryType(entry.entry_type ?? "free-write");
+                          setExpandedReflectionId(null);
                           enterCompose();
+                          void loadEntryReflections(entry.id);
                         }}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -673,6 +833,51 @@ export default function JournalPage() {
                   onClick={clearError}
                 >
                   {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Per-entry reflection history ─────────────────── */}
+            <AnimatePresence>
+              {selectedEntryId && (isLoadingReflections || entryReflections.length > 0) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-6"
+                >
+                  <div className="mb-2.5 flex items-center gap-2">
+                    <p className="section-label">Reflections on this entry</p>
+                    {entryReflections.length > 0 && (
+                      <span className="rounded-full bg-[var(--brand-300)]/20 px-2 py-0.5 text-[10px] font-bold text-[var(--brand-700)]">
+                        {entryReflections.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {isLoadingReflections ? (
+                    <div className="space-y-2">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="h-14 animate-pulse rounded-2xl bg-[var(--ink-300)]/10" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {entryReflections.map((ref, i) => (
+                        <ReflectionVersionCard
+                          key={ref.id}
+                          reflection={ref}
+                          versionNumber={entryReflections.length - i}
+                          isExpanded={expandedReflectionId === ref.id}
+                          onToggle={() =>
+                            setExpandedReflectionId(
+                              expandedReflectionId === ref.id ? null : ref.id,
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

@@ -37,6 +37,7 @@ export const composeRequestSchema = z.object({
   sourceText: z.string().min(10).max(15000),
   stylePreset: z.enum(stylePresets).optional().default("balanced"),
   persist: z.boolean().optional().default(true),
+  journalEntryId: z.string().uuid().optional(),
 });
 
 export const reflectionPayloadSchema = z.object({
