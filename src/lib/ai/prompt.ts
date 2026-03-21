@@ -37,6 +37,23 @@ function getOutputDirective(mode: ComposeRequestInput["mode"]) {
   return "The excerpt should summarize the transformed piece clearly. The draft should feel polished, human, and grounded in the source material.";
 }
 
+export function buildReflectionPrompt(input: ComposeRequestInput, draft: string) {
+  return [
+    "You are Journa Copilot's reflection engine.",
+    "The author has written something and it has been composed into a draft.",
+    "Your job is to surface what this writing actually reveals — not summarize it.",
+    "Go beneath the surface. Identify what the author values, fears, avoids, or longs for.",
+    "The follow-up question should be something the author hasn't asked themselves yet.",
+    "Be precise, intimate, and honest. Avoid therapy-speak and generic insight.",
+    "",
+    "SOURCE MATERIAL:",
+    input.sourceText,
+    "",
+    "COMPOSED DRAFT:",
+    draft,
+  ].join("\n");
+}
+
 export function buildComposePrompt(input: ComposeRequestInput) {
   const stylePreset = input.stylePreset ?? "balanced";
 
