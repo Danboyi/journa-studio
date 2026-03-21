@@ -8,7 +8,11 @@ import {
   BookOpen,
   Check,
   ChevronDown,
+  CloudRain,
+  Droplets,
+  Feather,
   Flame,
+  Ghost,
   Heart,
   Lightbulb,
   Mail,
@@ -16,6 +20,9 @@ import {
   MicOff,
   Moon,
   PenLine,
+  ScanEye,
+  Smile,
+  Star,
   Zap,
 } from "lucide-react";
 
@@ -30,14 +37,14 @@ const moods: NarrativeMood[] = [
   "serious", "funny", "sad", "sorrowful", "suspense", "soul-piercing", "horror",
 ];
 
-const moodEmoji: Record<NarrativeMood, string> = {
-  serious: "🧘",
-  funny: "😄",
-  sad: "😞",
-  sorrowful: "💙",
-  horror: "😨",
-  suspense: "😬",
-  "soul-piercing": "✨",
+const moodIcon: Record<NarrativeMood, typeof Feather> = {
+  serious: Feather,
+  funny: Smile,
+  sad: CloudRain,
+  sorrowful: Droplets,
+  horror: Ghost,
+  suspense: ScanEye,
+  "soul-piercing": Star,
 };
 
 const entryTypes: { type: EntryType; label: string; icon: typeof PenLine; hint: string }[] = [
@@ -332,7 +339,7 @@ export default function JournalPage() {
             onClick={() => setShowMoodPicker(!showMoodPicker)}
             className="flex items-center gap-1.5 rounded-full border border-[var(--ink-300)] bg-white/70 px-3 py-1.5 text-sm text-[var(--ink-700)] transition-colors hover:bg-white"
           >
-            <span>{moodEmoji[mood]}</span>
+            {(() => { const Icon = moodIcon[mood]; return <Icon className="h-3.5 w-3.5" />; })()}
             <span className="capitalize">{mood}</span>
             <ChevronDown className="h-3 w-3 text-[var(--ink-500)]" />
           </button>
@@ -358,7 +365,7 @@ export default function JournalPage() {
                         : "text-[var(--ink-800)] hover:bg-[var(--sand-50)]"
                     }`}
                   >
-                    <span>{moodEmoji[m]}</span>
+                    {(() => { const Icon = moodIcon[m]; return <Icon className="h-3.5 w-3.5" />; })()}
                     <span className="capitalize">{m}</span>
                   </button>
                 ))}
@@ -486,7 +493,7 @@ export default function JournalPage() {
                   <p className="mt-1 text-sm text-[var(--ink-700)] line-clamp-2">{entry.body}</p>
                 )}
                 <div className="mt-2 flex items-center gap-1.5">
-                  <span className="text-xs">{moodEmoji[entry.mood as NarrativeMood]}</span>
+                  {(() => { const Icon = moodIcon[entry.mood as NarrativeMood]; return <Icon className="h-3 w-3 text-[var(--ink-500)]" />; })()}
                   <span className="text-xs capitalize text-[var(--ink-500)]">{entry.mood}</span>
                 </div>
               </motion.div>

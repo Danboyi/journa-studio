@@ -2,14 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronDown, Loader2 } from "lucide-react";
+import { Sparkles, ChevronDown, Loader2, Feather, Smile, CloudRain, Droplets, Ghost, ScanEye, Star, Layers, BookText, Sprout } from "lucide-react";
 
 import { useCompose } from "@/hooks/use-compose";
 import type { NarrativeMood, StylePreset, WritingMode } from "@/types/journa";
 
-const moodEmoji: Record<NarrativeMood, string> = {
-  serious: "🧘", funny: "😄", sad: "😞", sorrowful: "💙",
-  horror: "😨", suspense: "😬", "soul-piercing": "✨",
+const moodIcon: Record<NarrativeMood, typeof Feather> = {
+  serious: Feather,
+  funny: Smile,
+  sad: CloudRain,
+  sorrowful: Droplets,
+  horror: Ghost,
+  suspense: ScanEye,
+  "soul-piercing": Star,
 };
 
 const templates = [
@@ -20,7 +25,7 @@ const templates = [
     mode: "essay" as WritingMode,
     stylePreset: "balanced" as StylePreset,
     mood: "serious" as NarrativeMood,
-    emoji: "🪞",
+    icon: Layers,
   },
   {
     id: "story",
@@ -29,7 +34,7 @@ const templates = [
     mode: "story" as WritingMode,
     stylePreset: "cinematic" as StylePreset,
     mood: "serious" as NarrativeMood,
-    emoji: "📖",
+    icon: BookText,
   },
   {
     id: "life",
@@ -38,7 +43,7 @@ const templates = [
     mode: "autobiography" as WritingMode,
     stylePreset: "soulful" as StylePreset,
     mood: "serious" as NarrativeMood,
-    emoji: "🌱",
+    icon: Sprout,
   },
 ];
 
@@ -100,7 +105,7 @@ export default function ReflectPage() {
               }`}
               style={{ minWidth: "130px" }}
             >
-              <span className="text-lg">{t.emoji}</span>
+              <t.icon className="h-4 w-4" />
               <span className="text-xs font-semibold">{t.label}</span>
               <span className={`text-xs ${compose.composeInput.mode === t.mode && compose.composeInput.stylePreset === t.stylePreset ? "text-white/70" : "text-[var(--ink-500)]"}`}>
                 {t.description}
@@ -129,7 +134,7 @@ export default function ReflectPage() {
             onClick={() => setShowMoodPicker(!showMoodPicker)}
             className="flex items-center gap-1.5 rounded-full border border-[var(--ink-300)] bg-white/70 px-3 py-1.5 text-sm text-[var(--ink-700)]"
           >
-            <span>{moodEmoji[compose.composeInput.mood]}</span>
+            {(() => { const Icon = moodIcon[compose.composeInput.mood]; return <Icon className="h-3.5 w-3.5" />; })()}
             <span className="capitalize">{compose.composeInput.mood}</span>
             <ChevronDown className="h-3 w-3 text-[var(--ink-500)]" />
           </button>
@@ -147,7 +152,7 @@ export default function ReflectPage() {
                     onClick={() => { compose.setComposeInput((p) => ({ ...p, mood: m })); setShowMoodPicker(false); }}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm ${m === compose.composeInput.mood ? "bg-[var(--ink-950)] text-white" : "text-[var(--ink-800)] hover:bg-[var(--sand-50)]"}`}
                   >
-                    <span>{moodEmoji[m]}</span>
+                    {(() => { const Icon = moodIcon[m]; return <Icon className="h-3.5 w-3.5" />; })()}
                     <span className="capitalize">{m}</span>
                   </button>
                 ))}

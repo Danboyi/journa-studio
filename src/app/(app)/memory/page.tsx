@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Search, Loader2 } from "lucide-react";
+import { Brain, Search, Loader2, Feather, Smile, CloudRain, Droplets, Ghost, ScanEye, Star } from "lucide-react";
 
 import { useMemory } from "@/hooks/use-memory";
 
@@ -20,14 +20,14 @@ const moodColor: Record<string, string> = {
   "soul-piercing": "bg-purple-400",
 };
 
-const moodEmoji: Record<string, string> = {
-  serious: "🧘",
-  funny: "😄",
-  sad: "😞",
-  sorrowful: "💙",
-  horror: "😨",
-  suspense: "😬",
-  "soul-piercing": "✨",
+const moodIcon: Record<string, typeof Feather> = {
+  serious: Feather,
+  funny: Smile,
+  sad: CloudRain,
+  sorrowful: Droplets,
+  horror: Ghost,
+  suspense: ScanEye,
+  "soul-piercing": Star,
 };
 
 function MoodCalendar({ points }: { points: Array<{ date: string; count: number; topMood: string | null }> }) {
@@ -71,10 +71,11 @@ function MoodCalendar({ points }: { points: Array<{ date: string; count: number;
       </div>
       {/* Legend */}
       <div className="mt-3 flex flex-wrap gap-2">
-        {Object.entries(moodEmoji).map(([mood, emoji]) => (
+        {Object.entries(moodIcon).map(([mood, Icon]) => (
           <div key={mood} className="flex items-center gap-1">
             <div className={`h-2.5 w-2.5 rounded-sm ${moodColor[mood]}`} />
-            <span className="text-[10px] capitalize text-[var(--ink-500)]">{emoji} {mood}</span>
+            <Icon className="h-2.5 w-2.5 text-[var(--ink-500)]" />
+            <span className="text-[10px] capitalize text-[var(--ink-500)]">{mood}</span>
           </div>
         ))}
       </div>

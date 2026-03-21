@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Lock, Sparkles, Brain, Eye, EyeOff, AlertTriangle, Terminal } from "lucide-react";
+import { ArrowRight, Lock, Sparkles, Brain, Eye, EyeOff, AlertTriangle, Terminal, PenLine, Layers } from "lucide-react";
 
 type AuthMode = "sign-up" | "sign-in";
 
@@ -367,28 +367,28 @@ export default function LandingPage() {
         <div className="mx-auto max-w-sm space-y-8">
           {[
             {
-              emoji: "✍️",
+              icon: PenLine,
               title: "Write first. Polish later.",
               body: "Start with the raw moment. The AI helps you see what you actually wrote — not what it thinks you should have said.",
             },
             {
-              emoji: "🪞",
+              icon: Layers,
               title: "Reflection before rewriting.",
               body: "Before any AI edit, you get a breakdown: what happened, what mattered, what sits beneath the surface.",
             },
             {
-              emoji: "🧠",
+              icon: Brain,
               title: "Your writing compounds.",
               body: "Over time, Journa surfaces patterns — moods, themes, recurring moments. Your life becomes searchable.",
             },
             {
-              emoji: "🔒",
+              icon: Lock,
               title: "Private is the default.",
               body: "Nothing is public unless you choose. Sharing is always explicit, optional, and revocable.",
             },
-          ].map(({ emoji, title, body }) => (
+          ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex gap-4">
-              <span className="mt-0.5 text-2xl">{emoji}</span>
+              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--ink-700)]" />
               <div>
                 <p className="text-sm font-semibold text-[var(--ink-950)]">{title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-[var(--ink-700)]">{body}</p>
