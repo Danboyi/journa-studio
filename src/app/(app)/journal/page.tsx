@@ -12,12 +12,15 @@ import {
   Heart,
   Lightbulb,
   Mail,
+  Mic,
+  MicOff,
   Moon,
   PenLine,
   Zap,
 } from "lucide-react";
 
 import { useJournal } from "@/hooks/use-journal";
+import { useVoiceInput } from "@/hooks/use-voice-input";
 import { dailyPromptPack, entryTypePrompts, streakMilestones } from "@/lib/prompt-packs";
 import type { EntryType, NarrativeMood } from "@/types/journa";
 
@@ -83,6 +86,13 @@ export default function JournalPage() {
   const [showMoodPicker, setShowMoodPicker] = useState(false);
   const [saved, setSaved] = useState(false);
   const [prompt] = useState(() => dailyPromptPack[Math.floor(Math.random() * dailyPromptPack.length)]);
+
+  const { state: voiceState, interim, toggle: toggleVoice } = useVoiceInput({
+    onTranscript: (text) => {
+      setBody((prev) => (prev ? prev + " " + text.trim() : text.trim()));
+      setIsFocused(true);
+    },
+  });
 
   // Entry-type-specific prompt
   const typePrompt = entryTypePrompts[entryType]?.[
@@ -292,7 +302,7 @@ export default function JournalPage() {
         <textarea
           ref={textareaRef}
           className="w-full resize-none border-0 bg-transparent text-base leading-relaxed text-[var(--ink-900)] placeholder:text-[var(--ink-300)] focus:outline-none"
-          placeholder={activeType.hint}
+          placeholder={voiceState === "listening" ? "Listening..." : activeType.hint}
           rows={entryType === "check-in" ? 2 : 6}
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -300,6 +310,12 @@ export default function JournalPage() {
           onBlur={() => !body && setIsFocused(false)}
           style={{ minHeight: entryType === "check-in" ? "60px" : "120px" }}
         />
+        {/* Live interim transcript */}
+        {interim && (
+          <p className="mt-1 text-base leading-relaxed text-[var(--ink-400)] italic">
+            {interim}
+          </p>
+        )}
         {body.length > 0 && (
           <p className="text-right text-xs text-[var(--ink-300)]">{body.length}</p>
         )}
@@ -352,6 +368,25 @@ export default function JournalPage() {
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-2">
+          {/* Mic button */}
+          {voiceState !== "unsupported" && (
+            <button
+              onClick={toggleVoice}
+              title={voiceState === "listening" ? "Stop recording" : "Speak your entry"}
+              className={`flex items-center justify-center rounded-full p-2 transition-all active:scale-95 ${
+                voiceState === "listening"
+                  ? "animate-pulse bg-red-500 text-white shadow-md shadow-red-200"
+                  : "border border-[var(--ink-300)] bg-white/70 text-[var(--ink-700)] hover:bg-white"
+              }`}
+            >
+              {voiceState === "listening" ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </button>
+          )}
+
           {/* Save button */}
           <button
             onClick={handleSave}
