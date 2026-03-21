@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("journal_entries")
-      .select("id, headline, body, mood, refined_body, created_at, updated_at")
+      .select("id, headline, body, mood, entry_type, refined_body, created_at, updated_at")
       .order("created_at", { ascending: false })
       .limit(30);
 
@@ -96,11 +96,12 @@ export async function POST(request: NextRequest) {
       .from("journal_entries")
       .insert({
         user_id: user.id,
-        headline: parsed.data.headline,
+        headline: parsed.data.headline || "",
         body: parsed.data.body,
         mood: parsed.data.mood,
+        entry_type: parsed.data.entryType,
       })
-      .select("id, headline, body, mood, refined_body, created_at, updated_at")
+      .select("id, headline, body, mood, entry_type, refined_body, created_at, updated_at")
       .single();
 
     if (error) {
