@@ -21,9 +21,12 @@ export const signInSchema = z.object({
   password: z.string().min(8).max(100),
 });
 
+const entryTypes = ["free-write", "check-in", "gratitude", "letter", "dream"] as const;
+
 export const createEntrySchema = z.object({
-  headline: z.string().min(2).max(140),
-  body: z.string().min(5).max(20000),
+  headline: z.string().max(140).optional().default(""),
+  body: z.string().min(1).max(20000),
   mood: z.enum(moods),
+  entryType: z.enum(entryTypes).optional().default("free-write"),
   shouldRefine: z.boolean().optional().default(false),
 });

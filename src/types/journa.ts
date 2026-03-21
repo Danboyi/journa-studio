@@ -16,6 +16,8 @@ export type WritingMode =
   | "autobiography"
   | "life-documentation";
 
+export type EntryType = "free-write" | "check-in" | "gratitude" | "letter" | "dream";
+
 export type StylePreset =
   | "balanced"
   | "cinematic"
@@ -59,9 +61,17 @@ export interface JournalEntry {
   headline: string;
   body: string;
   mood: NarrativeMood;
+  entry_type: EntryType;
   refined_body: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  lastEntryDate: string | null;
+  totalEntries: number;
 }
 
 export interface CompositionHistoryItem {
