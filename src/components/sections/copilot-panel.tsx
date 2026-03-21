@@ -316,7 +316,10 @@ export function CopilotPanel(props: CopilotPanelProps) {
         <Button className="mt-5 w-full" onClick={onGenerateDraft} disabled={isComposeLoading}>
           {isComposeLoading ? "Thinking..." : reflectionMode ? "Generate reflection" : "Generate rewrite"}
         </Button>
-        {composeStatus ? <p className="mt-2 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
+        <p className="mt-2 text-xs text-[var(--ink-500)]">
+          Your text is sent to an AI model to generate this response. It is not stored or used to train any model.
+        </p>
+        {composeStatus ? <p className="mt-1 text-xs text-[var(--ink-700)]">{composeStatus}</p> : null}
       </Card> : null}
 
       <Card className="p-4 sm:p-6">
