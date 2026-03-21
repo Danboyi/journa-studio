@@ -119,8 +119,9 @@ export default function ReflectPage() {
     if (draft) {
       compose.setComposeInput((prev) => ({
         ...prev,
-        sourceText: draft.sourceText,
-        mood:       draft.mood,
+        sourceText:     draft.sourceText,
+        mood:           draft.mood,
+        journalEntryId: draft.entryId ?? undefined,
       }));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

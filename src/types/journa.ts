@@ -39,6 +39,7 @@ export interface ComposeRequest {
   sourceText: string;
   stylePreset?: StylePreset;
   persist?: boolean;
+  journalEntryId?: string;
 }
 
 export interface ReflectionPayload {
@@ -86,6 +87,7 @@ export interface CompositionHistoryItem {
   draft: string;
   editorial_notes: string[];
   reflection: ReflectionPayload | null;
+  journal_entry_id: string | null;
   created_at: string;
   updated_at: string;
 }

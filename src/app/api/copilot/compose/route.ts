@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return attachRequestId(response, trace.requestId);
     }
 
-    const { persist, ...composeInput } = parsed.data;
+    const { persist, journalEntryId, ...composeInput } = parsed.data;
     const accessToken = getAccessToken(request);
 
     let userId: string | null = null;
@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
         draft: output.draft,
         editorial_notes: output.editorialNotes,
         reflection: output.reflection ?? {},
+        journal_entry_id: journalEntryId ?? null,
       });
     }
 
