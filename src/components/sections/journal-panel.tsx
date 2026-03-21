@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,6 +88,10 @@ export function JournalPanel({
             <Sparkles className="mr-2 h-4 w-4" /> Reflect with Copilot
           </Button>
         </div>
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--ink-500)]">
+          <Lock className="h-3 w-3 flex-shrink-0" />
+          Only you can see your entries. We never read, sell, or share them.
+        </p>
       </Card>
 
       <Card className="p-4 sm:p-6">

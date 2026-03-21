@@ -2,38 +2,40 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Sparkles, Brain, Library, Settings } from "lucide-react";
+import { PenLine, Sparkles, Layers, Library, User } from "lucide-react";
 
 const tabs = [
-  { href: "/journal", label: "Write", icon: BookOpen },
-  { href: "/reflect", label: "Reflect", icon: Sparkles },
-  { href: "/memory", label: "Memory", icon: Brain },
-  { href: "/library", label: "Library", icon: Library },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/journal",  icon: PenLine,   label: "Write"   },
+  { href: "/reflect",  icon: Sparkles,  label: "Reflect" },
+  { href: "/memory",   icon: Layers,    label: "Gravity" },
+  { href: "/library",  icon: Library,   label: "Library" },
+  { href: "/settings", icon: User,      label: "You"     },
 ] as const;
 
 export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="bottom-nav">
-      {tabs.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href;
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={`bottom-nav-item ${active ? "bottom-nav-item-active" : "bottom-nav-item-inactive"}`}
-            aria-current={active ? "page" : undefined}
-          >
-            <Icon
-              className={`h-5 w-5 transition-all duration-200 ${active ? "scale-110" : ""}`}
-              strokeWidth={active ? 2.2 : 1.8}
-            />
-            <span className="text-[10px] font-medium leading-none">{label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+    <div className="dock-wrapper">
+      <nav className="dock" role="navigation" aria-label="Main navigation">
+        {tabs.map(({ href, icon: Icon, label }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              aria-current={active ? "page" : undefined}
+              className={`dock-item ${active ? "dock-item-active" : "dock-item-inactive"}`}
+            >
+              <Icon
+                className="h-[19px] w-[19px]"
+                strokeWidth={active ? 2.25 : 1.65}
+              />
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

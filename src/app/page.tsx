@@ -3,15 +3,67 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Lock, Sparkles, Brain, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Lock, Sparkles, Brain, Eye, EyeOff, AlertTriangle, Terminal, PenLine, Layers } from "lucide-react";
 
 type AuthMode = "sign-up" | "sign-in";
+
+type SetupStatus = {
+  supabase: boolean;
+  openai: boolean;
+};
 
 const features = [
   { icon: Lock, label: "Private by default" },
   { icon: Sparkles, label: "AI that reflects, not rewrites" },
   { icon: Brain, label: "Memory that compounds" },
 ];
+
+function SetupBanner({ setup }: { setup: SetupStatus }) {
+  const missing: string[] = [];
+  if (!setup.supabase) missing.push("Supabase (auth + database)");
+  if (!setup.openai) missing.push("OpenAI (optional — AI compose)");
+
+  if (setup.supabase) return null; // Only block on Supabase — OpenAI has a demo fallback
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-auto mb-6 max-w-sm rounded-2xl border border-amber-200 bg-amber-50 p-4"
+    >
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <div>
+          <p className="text-sm font-semibold text-amber-900">Setup required</p>
+          <p className="mt-1 text-xs text-amber-800">
+            {missing[0]} is not configured. Add your credentials to{" "}
+            <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-amber-900">.env.local</code>{" "}
+            to enable sign up and login.
+          </p>
+          <details className="mt-3">
+            <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-amber-800">
+              <Terminal className="h-3 w-3" />
+              View setup instructions
+            </summary>
+            <div className="mt-2 rounded-xl bg-amber-100 p-3 font-mono text-xs text-amber-900 leading-relaxed">
+              <p className="font-semibold"># 1. Create Supabase project at supabase.com</p>
+              <p className="mt-2 font-semibold"># 2. Copy .env.example → .env.local</p>
+              <p className="mt-1">cp .env.example .env.local</p>
+              <p className="mt-2 font-semibold"># 3. Fill in your Supabase credentials:</p>
+              <p>NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co</p>
+              <p>NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key</p>
+              <p>SUPABASE_SERVICE_ROLE_KEY=your-service-role-key</p>
+              <p className="mt-2 font-semibold"># 4. Run migrations</p>
+              <p>supabase db push</p>
+              <p className="mt-2 font-semibold"># 5. Restart dev server</p>
+              <p>npm run dev</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -25,16 +77,28 @@ export default function LandingPage() {
   const [showAuth, setShowAuth] = useState(false);
   const authRef = useRef<HTMLDivElement>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [setup, setSetup] = useState<SetupStatus | null>(null);
 
-  // Redirect if already authenticated
+  // Check setup status + redirect if already authenticated
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((p: { user?: { id: string } }) => {
-        if (p.user) router.replace("/journal");
-      })
-      .catch(() => {})
-      .finally(() => setIsCheckingSession(false));
+    // Run both in parallel
+    Promise.all([
+      fetch("/api/health")
+        .then((r) => r.json())
+        .then((p: { providers?: { supabase?: boolean; openai?: boolean } }) => {
+          setSetup({
+            supabase: p.providers?.supabase ?? false,
+            openai: p.providers?.openai ?? false,
+          });
+        })
+        .catch(() => setSetup({ supabase: false, openai: false })),
+      fetch("/api/auth/session")
+        .then((r) => r.json())
+        .then((p: { user?: { id: string } }) => {
+          if (p.user) router.replace("/journal");
+        })
+        .catch(() => {}),
+    ]).finally(() => setIsCheckingSession(false));
   }, [router]);
 
   function openAuth(mode: AuthMode) {
@@ -67,7 +131,13 @@ export default function LandingPage() {
       };
 
       if (!res.ok || payload.error) {
-        setError(payload.error ?? "Authentication failed.");
+        const msg = payload.error ?? "Authentication failed.";
+        // Give a clearer message for the Supabase not configured case
+        setError(
+          msg === "Supabase is not configured."
+            ? "Database not configured. Add Supabase credentials to .env.local and restart the server."
+            : msg
+        );
         return;
       }
 
@@ -108,6 +178,13 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden">
+      {/* Setup banner — shown when Supabase not configured */}
+      {setup && !setup.supabase && (
+        <div className="px-6 pt-6 sm:px-8">
+          <SetupBanner setup={setup} />
+        </div>
+      )}
+
       {/* Hero — fills first screen */}
       <section className="flex min-h-[100dvh] flex-col px-6 pb-8 sm:px-8">
         {/* Top wordmark */}
@@ -154,14 +231,18 @@ export default function LandingPage() {
             className="mt-10 flex flex-col gap-3 sm:flex-row"
           >
             <button
-              onClick={() => openAuth("sign-up")}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-[var(--ink-950)] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-[0.98] sm:flex-1"
+              onClick={() => setup?.supabase !== false && openAuth("sign-up")}
+              disabled={setup?.supabase === false}
+              title={setup?.supabase === false ? "Configure Supabase in .env.local first" : undefined}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-[var(--ink-950)] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-[0.98] disabled:opacity-40 sm:flex-1"
             >
               Start writing <ArrowRight className="h-4 w-4" />
             </button>
             <button
-              onClick={() => openAuth("sign-in")}
-              className="flex items-center justify-center rounded-2xl border border-[var(--ink-300)] bg-white/70 px-6 py-3.5 text-sm font-medium text-[var(--ink-800)] backdrop-blur-sm transition-all active:scale-[0.98] sm:flex-1"
+              onClick={() => setup?.supabase !== false && openAuth("sign-in")}
+              disabled={setup?.supabase === false}
+              title={setup?.supabase === false ? "Configure Supabase in .env.local first" : undefined}
+              className="flex items-center justify-center rounded-2xl border border-[var(--ink-300)] bg-white/70 px-6 py-3.5 text-sm font-medium text-[var(--ink-800)] backdrop-blur-sm transition-all active:scale-[0.98] disabled:opacity-40 sm:flex-1"
             >
               Sign in
             </button>
@@ -286,28 +367,28 @@ export default function LandingPage() {
         <div className="mx-auto max-w-sm space-y-8">
           {[
             {
-              emoji: "✍️",
+              icon: PenLine,
               title: "Write first. Polish later.",
               body: "Start with the raw moment. The AI helps you see what you actually wrote — not what it thinks you should have said.",
             },
             {
-              emoji: "🪞",
+              icon: Layers,
               title: "Reflection before rewriting.",
               body: "Before any AI edit, you get a breakdown: what happened, what mattered, what sits beneath the surface.",
             },
             {
-              emoji: "🧠",
+              icon: Brain,
               title: "Your writing compounds.",
               body: "Over time, Journa surfaces patterns — moods, themes, recurring moments. Your life becomes searchable.",
             },
             {
-              emoji: "🔒",
+              icon: Lock,
               title: "Private is the default.",
               body: "Nothing is public unless you choose. Sharing is always explicit, optional, and revocable.",
             },
-          ].map(({ emoji, title, body }) => (
+          ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex gap-4">
-              <span className="mt-0.5 text-2xl">{emoji}</span>
+              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--ink-700)]" />
               <div>
                 <p className="text-sm font-semibold text-[var(--ink-950)]">{title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-[var(--ink-700)]">{body}</p>

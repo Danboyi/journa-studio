@@ -49,20 +49,20 @@ export function useCompose() {
   const moods: NarrativeMood[] = ["funny", "serious", "sad", "sorrowful", "horror", "suspense", "soul-piercing"];
 
   // Save draft to localStorage so reflect page can pick it up after navigation
-  const saveDraft = useCallback((sourceText: string, mood: NarrativeMood) => {
+  const saveDraft = useCallback((sourceText: string, mood: NarrativeMood, entryId?: string) => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ sourceText, mood }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ sourceText, mood, entryId: entryId ?? null }));
     } catch {
       // ignore
     }
   }, []);
 
-  const loadDraft = useCallback((): { sourceText: string; mood: NarrativeMood } | null => {
+  const loadDraft = useCallback((): { sourceText: string; mood: NarrativeMood; entryId: string | null } | null => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return null;
       localStorage.removeItem(DRAFT_KEY);
-      return JSON.parse(raw) as { sourceText: string; mood: NarrativeMood };
+      return JSON.parse(raw) as { sourceText: string; mood: NarrativeMood; entryId: string | null };
     } catch {
       return null;
     }

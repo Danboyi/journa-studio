@@ -1,11 +1,12 @@
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-import { env, hasOpenAI } from "@/config/env";
+import { env, hasOpenAI, hasAnthropic } from "@/config/env";
 import { composeDraft } from "@/lib/demo-composer";
-import { buildComposePrompt } from "@/lib/ai/prompt";
+import { buildComposePrompt, buildReflectionPrompt } from "@/lib/ai/prompt";
 import {
-  composeResponseJsonSchema,
   composeResponseSchema,
+  reflectionPayloadSchema,
   type ComposeRequestInput,
   type ComposeResponseOutput,
 } from "@/lib/ai/schema";
@@ -24,13 +25,15 @@ class OpenAIComposeProvider implements ComposeProvider {
   private client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
 
   async compose(input: ComposeRequestInput): Promise<ComposeResponseOutput> {
-    const response = await this.client.responses.create({
+    const { composeResponseJsonSchema } = await import("@/lib/ai/schema");
+
+    const completion = await this.client.chat.completions.create({
       model: env.OPENAI_MODEL,
-      input: buildComposePrompt(input),
+      messages: [{ role: "user", content: buildComposePrompt(input) }],
       temperature: 0.8,
-      text: {
-        format: {
-          type: "json_schema",
+      response_format: {
+        type: "json_schema",
+        json_schema: {
           name: "compose_response",
           strict: true,
           schema: composeResponseJsonSchema,
@@ -38,10 +41,9 @@ class OpenAIComposeProvider implements ComposeProvider {
       },
     });
 
-    const text = response.output_text;
+    const text = completion.choices[0]?.message?.content ?? "";
 
     let parsed: unknown;
-
     try {
       parsed = JSON.parse(text);
     } catch {
@@ -52,10 +54,98 @@ class OpenAIComposeProvider implements ComposeProvider {
   }
 }
 
-export function getComposeProvider(): ComposeProvider {
-  if (hasOpenAI) {
-    return new OpenAIComposeProvider();
+const REFLECTION_MODES = new Set(["daily-journal", "essay"]);
+
+class ClaudeComposeProvider implements ComposeProvider {
+  private client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+  async compose(input: ComposeRequestInput): Promise<ComposeResponseOutput> {
+    const response = await this.client.messages.create({
+      model: env.ANTHROPIC_MODEL,
+      max_tokens: 4096,
+      tools: [
+        {
+          name: "compose_response",
+          description:
+            "Return the composition result with title, excerpt, draft, and editorialNotes.",
+          input_schema: {
+            type: "object" as const,
+            required: ["title", "excerpt", "draft", "editorialNotes"],
+            properties: {
+              title: { type: "string" },
+              excerpt: { type: "string" },
+              draft: { type: "string" },
+              editorialNotes: {
+                type: "array",
+                items: { type: "string" },
+              },
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "tool", name: "compose_response" },
+      messages: [{ role: "user", content: buildComposePrompt(input) }],
+    });
+
+    const toolUse = response.content.find((block) => block.type === "tool_use");
+
+    if (!toolUse || toolUse.type !== "tool_use") {
+      return composeResponseSchema.parse(composeDraft(input));
+    }
+
+    const composed = composeResponseSchema.parse(toolUse.input);
+
+    if (REFLECTION_MODES.has(input.mode)) {
+      const reflection = await this.composeReflection(input, composed.draft);
+      if (reflection) return { ...composed, reflection };
+    }
+
+    return composed;
   }
 
+  private async composeReflection(input: ComposeRequestInput, draft: string) {
+    try {
+      const response = await this.client.messages.create({
+        model: env.ANTHROPIC_REFLECTION_MODEL,
+        max_tokens: 1024,
+        tools: [
+          {
+            name: "compose_reflection",
+            description: "Return a deep reflection on the author's writing.",
+            input_schema: {
+              type: "object" as const,
+              required: ["summary", "whatMattered", "beneathTheSurface", "followUpQuestion"],
+              properties: {
+                summary: { type: "string" },
+                whatMattered: { type: "string" },
+                beneathTheSurface: { type: "string" },
+                followUpQuestion: { type: "string" },
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "tool", name: "compose_reflection" },
+        messages: [{ role: "user", content: buildReflectionPrompt(input, draft) }],
+      });
+
+      const toolUse = response.content.find((block) => block.type === "tool_use");
+      if (!toolUse || toolUse.type !== "tool_use") return null;
+      return reflectionPayloadSchema.parse(toolUse.input);
+    } catch {
+      return null;
+    }
+  }
+}
+
+export function getComposeProvider(): ComposeProvider {
+  const requested = env.AI_PROVIDER;
+
+  if (requested === "claude" && hasAnthropic) return new ClaudeComposeProvider();
+  if (requested === "openai" && hasOpenAI) return new OpenAIComposeProvider();
+  if (requested === "demo") return new DemoComposeProvider();
+
+  // Auto-select: prefer Claude, fall back to OpenAI, then demo
+  if (hasAnthropic) return new ClaudeComposeProvider();
+  if (hasOpenAI) return new OpenAIComposeProvider();
   return new DemoComposeProvider();
 }

@@ -6,9 +6,9 @@ import { attachRequestId, beginRequest, endRequest, failRequest } from "@/lib/te
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ jobId: string }> },
+  context: { params: Promise<{ id: string }> },
 ) {
-  const trace = beginRequest(request, "api.copilot.compose.jobs.status");
+  const trace = beginRequest(request, "api.journal.entries.reflections.list");
 
   try {
     const accessToken = getAccessToken(request);
@@ -30,7 +30,7 @@ export async function GET(
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser(accessToken);
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
       failRequest(trace, 401, "invalid_session");
@@ -39,54 +39,42 @@ export async function GET(
     }
 
     const params = await context.params;
+    const entryId = params.id;
 
-    const { data: job, error: jobError } = await supabase
-      .from("compose_jobs")
-      .select(
-        "id, status, attempt_count, max_attempts, next_run_at, started_at, completed_at, last_error, composition_id, created_at, updated_at",
-      )
-      .eq("id", params.jobId)
+    // Verify the journal entry belongs to the user before returning reflections
+    const { data: entry, error: entryError } = await supabase
+      .from("journal_entries")
+      .select("id")
+      .eq("id", entryId)
       .eq("user_id", user.id)
       .single();
 
-    if (jobError || !job) {
-      failRequest(trace, 404, "compose_job_not_found", { user_id: user.id, job_id: params.jobId });
-      const response = NextResponse.json({ error: "Compose job not found." }, { status: 404 });
+    if (entryError || !entry) {
+      failRequest(trace, 404, "journal_entry_not_found", { user_id: user.id, entry_id: entryId });
+      const response = NextResponse.json({ error: "Journal entry not found." }, { status: 404 });
       return attachRequestId(response, trace.requestId);
     }
 
-    let composition: {
-      id: string;
-      source_text: string;
-      voice_notes: string;
-      style_preset: string | null;
-      title: string;
-      excerpt: string;
-      draft: string;
-      editorial_notes: string[];
-      reflection: unknown;
-      mode: string;
-      mood: string;
-      created_at: string;
-    } | null = null;
+    const { data: reflections, error: reflectionsError } = await supabase
+      .from("compositions")
+      .select(
+        "id, mode, mood, style_preset, title, excerpt, draft, editorial_notes, reflection, journal_entry_id, created_at, updated_at",
+      )
+      .eq("journal_entry_id", entryId)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
-    if (job.composition_id) {
-      const { data } = await supabase
-        .from("compositions")
-        .select(
-          "id, source_text, voice_notes, style_preset, title, excerpt, draft, editorial_notes, reflection, mode, mood, created_at",
-        )
-        .eq("id", job.composition_id)
-        .eq("user_id", user.id)
-        .single();
-      composition = data;
+    if (reflectionsError) {
+      failRequest(trace, 400, "reflections_fetch_failed", { user_id: user.id, entry_id: entryId });
+      const response = NextResponse.json({ error: reflectionsError.message }, { status: 400 });
+      return attachRequestId(response, trace.requestId);
     }
 
-    const response = NextResponse.json({ job, composition });
-    endRequest(trace, 200, { user_id: user.id, job_id: job.id, status: job.status });
+    const response = NextResponse.json({ reflections: reflections ?? [] });
+    endRequest(trace, 200, { user_id: user.id, entry_id: entryId, count: reflections?.length ?? 0 });
     return attachRequestId(response, trace.requestId);
   } catch (error) {
-    failRequest(trace, 500, "compose_jobs_status_unhandled_error", {
+    failRequest(trace, 500, "reflections_unhandled_error", {
       error: error instanceof Error ? error.message : "unknown",
     });
     const response = NextResponse.json({ error: "Internal server error." }, { status: 500 });
